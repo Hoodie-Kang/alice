@@ -17,7 +17,7 @@ package refresh
 import (
 	"errors"
 	"math/big"
-	"fmt"
+
 	"github.com/getamis/alice/crypto/commitment"
 	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/homo/paillier"
@@ -204,7 +204,6 @@ func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
 	partialPubKey := make(map[string]*pt.ECPoint)
 	Y := make(map[string]*pt.ECPoint)
 	ped := make(map[string]*paillierzkproof.PederssenOpenParameter)
-	fmt.Println("refreshShare", refreshShare)
 	for _, peer := range p.peers {
 		plaintextShareBig := peer.round3.plaintextShareBig
 		refreshShare = refreshShare.Add(refreshShare, plaintextShareBig)
@@ -221,7 +220,6 @@ func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
 			}
 		}
 		partialPubKey[peer1.Id] = tempSum
-		fmt.Println("final_partialPubKey", peer1.Id, tempSum)
 		Y[peer1.Id] = peer1.round2.y
 		ped[peer1.Id] = peer1.round2.pederssenPara
 	}
@@ -230,8 +228,6 @@ func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
 	refreshShare.Add(p.oldShare, refreshShare)
 	refreshShare.Mod(refreshShare, curve.Params().N)
 	partialPubKey[selfID] = pt.ScalarBaseMult(curve, refreshShare)
-	fmt.Print(selfID)
-	fmt.Println("finalize" , partialPubKey)
 	Y[selfID] = pt.ScalarBaseMult(curve, p.y)
 	ped[selfID] = p.ped.PedersenOpenParameter
 	p.result = &Result{

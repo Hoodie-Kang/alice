@@ -95,10 +95,10 @@ func (d *DKG) GetResult() (*Result, error) {
 	bks := make(map[string]*birkhoffinterpolation.BkParameter, d.ph.peerManager.NumPeers()+1)
 	bks[d.ph.peerManager.SelfID()] = d.ph.bk
 	partialPubKey := make(map[string]*ecpointgrouplaw.ECPoint)
-	partialPubKey[d.ph.peerManager.SelfID()] = rh.u0g
+	partialPubKey[d.ph.peerManager.SelfID()] = ecpointgrouplaw.ScalarBaseMult(rh.publicKey.GetCurve(), rh.share)
 	for id, peer := range d.ph.peers {
 		bks[id] = peer.peer.bk
-		partialPubKey[id] = peer.decommit.u0g
+		partialPubKey[id] = peer.result.result
 	}
 	ssid := cggmp.ComputeSSID(d.ph.sid, []byte(d.ph.peerManager.SelfID()), rh.rid)
 	return &Result{
