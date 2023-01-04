@@ -24,14 +24,19 @@ type Pubkey struct {
 	Y string `yaml:"y"`
 }
 
-type Privatekey struct {
-	Lambda string `yaml:"lambda"`
-	Mu 	   string `yaml:"mu"`
-}
+// type Privatekey struct {
+// 	Lambda string `yaml:"lambda"`
+// 	Mu 	   string `yaml:"mu"`
+// }
+
+// type PaillierKey struct {
+// 	PublicKey Pubkey `yaml:"publickey"`
+// 	PrivateKey Privatekey `yaml:"privatekey"`
+// }
 
 type PaillierKey struct {
-	PublicKey Pubkey `yaml:"publickey"`
-	PrivateKey Privatekey `yaml:"privatekey"`
+	N string `yaml:"n"`
+	G string `yaml:"g"`
 }
 
 type BK struct {

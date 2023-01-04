@@ -37,11 +37,10 @@ type ReshareConfig struct {
 
 type ReshareResult struct {
 	Share string `yaml:"share"`
-	// PaillierKey `yaml:"paillierKey"`
+	PaillierKey config.PaillierKey `yaml:"paillierKey"`
 	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
 	Ped map[string]config.Ped `yaml:"ped"`
 	AllY  map[string]config.AllY `yaml:"ally"`
-	// refreshPaillierKey   *paillier.Paillier
 }
 
 func readReshareConfigFile(filaPath string) (*ReshareConfig, error) {
@@ -61,7 +60,12 @@ func readReshareConfigFile(filaPath string) (*ReshareConfig, error) {
 func writeReshareResult(id string, result *refresh.Result) error {
 	reshareResult := &ReshareResult{
 		Share: result.RefreshShare.String(),
-		// PaillierKey: result.RefreshPaillierKey,
+		// output.yaml 작성을 위해서 paillierKey.pubkey 만 공개함
+		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
+		PaillierKey: config.PaillierKey{
+			N: result.RefreshPaillierKey.GetN().String(),
+			G: result.RefreshPaillierKey.GetG().String(),
+		},
 		PartialPubKey: make(map[string]config.PartialPubKey),
 		Ped: make(map[string]config.Ped),
 		AllY: make(map[string]config.AllY),
