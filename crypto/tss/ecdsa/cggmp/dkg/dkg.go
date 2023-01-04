@@ -38,6 +38,8 @@ type Result struct {
 	Share     *big.Int
 	Bks       map[string]*birkhoffinterpolation.BkParameter
 	Rid       []byte
+	PartialPubKey map[string]*ecpointgrouplaw.ECPoint
+	SSid 	  []byte
 }
 
 func NewDKG(curve elliptic.Curve, peerManager types.PeerManager, sid []byte, threshold uint32, rank uint32, listener types.StateChangedListener) (*DKG, error) {
@@ -92,14 +94,20 @@ func (d *DKG) GetResult() (*Result, error) {
 
 	bks := make(map[string]*birkhoffinterpolation.BkParameter, d.ph.peerManager.NumPeers()+1)
 	bks[d.ph.peerManager.SelfID()] = d.ph.bk
+	partialPubKey := make(map[string]*ecpointgrouplaw.ECPoint)
+	partialPubKey[d.ph.peerManager.SelfID()] = rh.u0g
 	for id, peer := range d.ph.peers {
 		bks[id] = peer.peer.bk
+		partialPubKey[id] = peer.decommit.u0g
 	}
+	ssid := cggmp.ComputeSSID(d.ph.sid, []byte(d.ph.peerManager.SelfID()), rh.rid)
 	return &Result{
 		PublicKey: rh.publicKey,
 		Share:     rh.share,
 		Bks:       bks,
 		Rid:       rh.rid,
+		PartialPubKey: partialPubKey,
+		SSid:      ssid,
 	}, nil
 }
 

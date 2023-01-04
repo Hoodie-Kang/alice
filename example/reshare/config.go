@@ -17,7 +17,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/getamis/alice/crypto/tss/ecdsa/gg18/reshare"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
+	// "github.com/getamis/alice/crypto/tss/ecdsa/gg18/reshare"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
 	"gopkg.in/yaml.v2"
@@ -30,10 +31,17 @@ type ReshareConfig struct {
 	Pubkey    config.Pubkey        `yaml:"pubkey"`
 	BKs       map[string]config.BK `yaml:"bks"`
 	Peers     []int64              `yaml:"peers"`
+	PartialPubkey map[string]config.PartialPubKey `yaml:"partialPubKey"`
+	SSid      []byte			   `yaml:"ssid"`
 }
 
 type ReshareResult struct {
 	Share string `yaml:"share"`
+	// PaillierKey `yaml:"paillierKey"`
+	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
+	Ped map[string]config.Ped `yaml:"ped"`
+	AllY  map[string]config.AllY `yaml:"ally"`
+	// refreshPaillierKey   *paillier.Paillier
 }
 
 func readReshareConfigFile(filaPath string) (*ReshareConfig, error) {
@@ -50,9 +58,32 @@ func readReshareConfigFile(filaPath string) (*ReshareConfig, error) {
 	return c, nil
 }
 
-func writeReshareResult(id string, result *reshare.Result) error {
+func writeReshareResult(id string, result *refresh.Result) error {
 	reshareResult := &ReshareResult{
-		Share: result.Share.String(),
+		Share: result.RefreshShare.String(),
+		// PaillierKey: result.RefreshPaillierKey,
+		PartialPubKey: make(map[string]config.PartialPubKey),
+		Ped: make(map[string]config.Ped),
+		AllY: make(map[string]config.AllY),
+	}
+	for peerID, ppk := range result.RefreshPartialPubKey {
+		reshareResult.PartialPubKey[peerID] = config.PartialPubKey{
+			X: ppk.GetX().String(),
+			Y: ppk.GetY().String(),
+		}
+	}
+	for peerID, ped := range result.PedParameter {
+		reshareResult.Ped[peerID] = config.Ped{
+			N: ped.Getn().String(),
+			S: ped.Gets().String(),
+			T: ped.Gett().String(),
+		}
+	}
+	for peerID, y := range result.Y {
+		reshareResult.AllY[peerID] = config.AllY{
+			X: y.GetX().String(),
+			Y: y.GetY().String(),
+		}
 	}
 	err := config.WriteYamlFile(reshareResult, getFilePath(id))
 	if err != nil {

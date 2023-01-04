@@ -17,7 +17,8 @@ import (
 	"io/ioutil"
 
 	"github.com/getamis/alice/crypto/homo/paillier"
-	"github.com/getamis/alice/crypto/tss/ecdsa/gg18/signer"
+	// "github.com/getamis/alice/crypto/tss/ecdsa/gg18/signer"
+	signer "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
@@ -29,7 +30,7 @@ type service struct {
 	config *SignerConfig
 	pm     types.PeerManager
 
-	signer *signer.Signer
+	signer *signer.Sign
 	done   chan struct{}
 }
 
@@ -41,7 +42,7 @@ func NewService(config *SignerConfig, pm types.PeerManager) (*service, error) {
 	}
 
 	// Signer needs results from DKG.
-	dkgResult, err := utils.ConvertDKGResult(config.Pubkey, config.Share, config.BKs)
+	dkgResult, err := utils.ConvertDKGResult(config.Pubkey, config.Share, config.BKs, config.PartialPubKey)
 	if err != nil {
 		log.Warn("Cannot get DKG result", "err", err)
 		return nil, err
@@ -55,7 +56,7 @@ func NewService(config *SignerConfig, pm types.PeerManager) (*service, error) {
 	}
 
 	// Create signer
-	signer, err := signer.NewSigner(pm, dkgResult.PublicKey, paillier, dkgResult.Share, dkgResult.Bks, []byte(config.Message), s)
+	signer, err := signer.NewSign(pm, dkgResult.PublicKey, paillier, dkgResult.Share, dkgResult.Bks, []byte(config.Message), s)
 	if err != nil {
 		log.Warn("Cannot create a new signer", "err", err)
 		return nil, err

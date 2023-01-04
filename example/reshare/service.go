@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//   http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -16,7 +16,8 @@ package reshare
 import (
 	"io/ioutil"
 
-	"github.com/getamis/alice/crypto/tss/ecdsa/gg18/reshare"
+	// "github.com/getamis/alice/crypto/tss/ecdsa/gg18/reshare"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
@@ -28,7 +29,7 @@ type service struct {
 	config *ReshareConfig
 	pm     types.PeerManager
 
-	reshare *reshare.Reshare
+	reshare *refresh.Refresh
 	done    chan struct{}
 }
 
@@ -40,14 +41,14 @@ func NewService(config *ReshareConfig, pm types.PeerManager) (*service, error) {
 	}
 
 	// Reshare needs results from DKG.
-	dkgResult, err := utils.ConvertDKGResult(config.Pubkey, config.Share, config.BKs)
+	dkgResult, err := utils.ConvertDKGResult(config.Pubkey, config.Share, config.BKs, config.PartialPubkey)
 	if err != nil {
 		log.Warn("Cannot get DKG result", "err", err)
 		return nil, err
 	}
 
 	// Create reshare
-	reshare, err := reshare.NewReshare(pm, config.Threshold, dkgResult.PublicKey, dkgResult.Share, dkgResult.Bks, s)
+	reshare, err := refresh.NewRefresh(dkgResult.Share, dkgResult.PublicKey, pm, config.Threshold, dkgResult.PartialPubKey, dkgResult.Bks, 2048, config.SSid, s)
 	if err != nil {
 		log.Warn("Cannot create a new reshare", "err", err)
 		return nil, err
@@ -57,7 +58,7 @@ func NewService(config *ReshareConfig, pm types.PeerManager) (*service, error) {
 }
 
 func (p *service) Handle(s network.Stream) {
-	data := &reshare.Message{}
+	data := &refresh.Message{}
 	buf, err := ioutil.ReadAll(s)
 	if err != nil {
 		log.Warn("Cannot read data from stream", "err", err)

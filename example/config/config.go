@@ -24,11 +24,36 @@ type Pubkey struct {
 	Y string `yaml:"y"`
 }
 
+type Privatekey struct {
+	Lambda string `yaml:"lambda"`
+	Mu 	   string `yaml:"mu"`
+}
+
+type PaillierKey struct {
+	PublicKey Pubkey `yaml:"publickey"`
+	PrivateKey Privatekey `yaml:"privatekey"`
+}
+
 type BK struct {
 	X    string `yaml:"x"`
 	Rank uint32 `yaml:"rank"`
 }
 
+type PartialPubKey struct {
+	X string `yaml:"x"`
+	Y string `yaml:"y"`
+}
+
+type AllY struct {
+	X string `yaml:"x"`
+	Y string `yaml:"y"`
+}
+
+type Ped struct {
+	N string `yaml:"n"`
+	S string `yaml:"s"`
+	T string `yaml:"t"`
+}
 func WriteYamlFile(yamlData interface{}, filePath string) error {
 	data, err := yaml.Marshal(yamlData)
 	if err != nil {

@@ -1,6 +1,5 @@
 port: 10001
 rank: 0
-threshold: 3
+threshold: 2
 peers:
   - 10002
-  - 10003

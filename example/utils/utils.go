@@ -21,7 +21,7 @@ import (
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	"github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/elliptic"
-	"github.com/getamis/alice/crypto/tss/dkg"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
 )
@@ -44,7 +44,7 @@ func GetCurve() elliptic.Curve {
 }
 
 // ConvertDKGResult converts DKG result from config.
-func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK) (*dkg.Result, error) {
+func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK, cfgPPK map[string]config.PartialPubKey) (*dkg.Result, error) {
 	// Build public key.
 	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
 	if !ok {
@@ -73,6 +73,7 @@ func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[strin
 		PublicKey: pubkey,
 		Share:     share,
 		Bks:       make(map[string]*birkhoffinterpolation.BkParameter),
+		PartialPubKey: make(map[string]*ecpointgrouplaw.ECPoint),
 	}
 
 	// Build bks.
@@ -85,5 +86,24 @@ func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[strin
 		dkgResult.Bks[peerID] = birkhoffinterpolation.NewBkParameter(x, bk.Rank)
 	}
 
+	// Build PartialPubKey.
+	for peerId, ppk := range cfgPPK {
+		x, ok := new(big.Int).SetString(ppk.X, 10)
+		if !ok {
+			log.Error("Cannot convert string to big int", "x", ppk.X)
+			return nil, ErrConversion
+		}
+		y, ok := new(big.Int).SetString(ppk.Y, 10)
+		if !ok {
+			log.Error("Cannot convert string to big int", "y", ppk.Y)
+			return nil, ErrConversion
+		}
+		ppkey, err := ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
+		if err != nil {
+			log.Error("Cannot get partial public key", "err", err)
+			return nil, err
+		}
+		dkgResult.PartialPubKey[peerId] = ppkey
+	}
 	return dkgResult, nil
 }

@@ -30,7 +30,7 @@ tools: $(DIRS) $(PROTOC)
 PHONY += protobuf
 protobuf:
 	@for d in $$(find "crypto" -type f -name "*.proto"); do		\
-		protoc -I$(GOPATH)/src --go_out=$(GOPATH)/src $(CURDIR)/$$d; \
+		protoc -I$(GOPATH)/ --go_out=$(GOPATH)/src $(CURDIR)/$$d; \
 	done;
 
 PHONY += coverage.txt

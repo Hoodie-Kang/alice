@@ -16,7 +16,7 @@ package dkg
 import (
 	"io/ioutil"
 
-	"github.com/getamis/alice/crypto/tss/dkg"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
@@ -39,8 +39,8 @@ func NewService(config *DKGConfig, pm types.PeerManager) (*service, error) {
 		done:   make(chan struct{}),
 	}
 
-	// Create dkg
-	d, err := dkg.NewDKG(utils.GetCurve(), pm, config.Threshold, config.Rank, s)
+	sid := make([]byte, 1)
+	d, err := dkg.NewDKG(utils.GetCurve(), pm, sid, config.Threshold, config.Rank, s)
 	if err != nil {
 		log.Warn("Cannot create a new DKG", "config", config, "err", err)
 		return nil, err

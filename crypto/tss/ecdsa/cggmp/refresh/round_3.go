@@ -17,7 +17,7 @@ package refresh
 import (
 	"errors"
 	"math/big"
-
+	"fmt"
 	"github.com/getamis/alice/crypto/commitment"
 	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/homo/paillier"
@@ -33,12 +33,15 @@ type round3Data struct {
 	partialRefreshPubKey map[string]*pt.ECPoint
 }
 
+// package 가 달라서 example 패키지로 export 하기 위해
+// struct field 명을 대문자로 변경해서 작업함
+// 추후에 package를 하나로 만들면 소문자로 변경 ** 예정
 type Result struct {
-	refreshShare         *big.Int
-	refreshPaillierKey   *paillier.Paillier
-	refreshPartialPubKey map[string]*pt.ECPoint
-	y                    map[string]*pt.ECPoint
-	pedParameter         map[string]*paillierzkproof.PederssenOpenParameter
+	RefreshShare         *big.Int
+	RefreshPaillierKey   *paillier.Paillier
+	RefreshPartialPubKey map[string]*pt.ECPoint
+	Y                    map[string]*pt.ECPoint
+	PedParameter         map[string]*paillierzkproof.PederssenOpenParameter
 }
 
 type round3Handler struct {
@@ -201,6 +204,7 @@ func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
 	partialPubKey := make(map[string]*pt.ECPoint)
 	Y := make(map[string]*pt.ECPoint)
 	ped := make(map[string]*paillierzkproof.PederssenOpenParameter)
+	fmt.Println("refreshShare", refreshShare)
 	for _, peer := range p.peers {
 		plaintextShareBig := peer.round3.plaintextShareBig
 		refreshShare = refreshShare.Add(refreshShare, plaintextShareBig)
@@ -217,6 +221,7 @@ func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
 			}
 		}
 		partialPubKey[peer1.Id] = tempSum
+		fmt.Println("final_partialPubKey", peer1.Id, tempSum)
 		Y[peer1.Id] = peer1.round2.y
 		ped[peer1.Id] = peer1.round2.pederssenPara
 	}
@@ -225,17 +230,19 @@ func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
 	refreshShare.Add(p.oldShare, refreshShare)
 	refreshShare.Mod(refreshShare, curve.Params().N)
 	partialPubKey[selfID] = pt.ScalarBaseMult(curve, refreshShare)
+	fmt.Print(selfID)
+	fmt.Println("finalize" , partialPubKey)
 	Y[selfID] = pt.ScalarBaseMult(curve, p.y)
 	ped[selfID] = p.ped.PedersenOpenParameter
 	p.result = &Result{
 		// new Share
-		refreshShare:       refreshShare,
-		refreshPaillierKey: p.paillierKey,
+		RefreshShare:       refreshShare,
+		RefreshPaillierKey: p.paillierKey,
 		// refreshPartialPubKey: X
-		refreshPartialPubKey: partialPubKey,
-		y:                    Y,
+		RefreshPartialPubKey: partialPubKey,
+		Y:                    Y,
 		// pedParameter: N, s, t
-		pedParameter: ped,
+		PedParameter: ped,
 	}
 	return nil, nil
 }

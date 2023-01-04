@@ -17,7 +17,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/getamis/alice/crypto/tss/dkg"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
 	"gopkg.in/yaml.v2"
@@ -34,6 +34,8 @@ type DKGResult struct {
 	Share  string               `yaml:"share"`
 	Pubkey config.Pubkey        `yaml:"pubkey"`
 	BKs    map[string]config.BK `yaml:"bks"`
+	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
+	SSid    []byte               `yaml:"ssid"`
 }
 
 func readDKGConfigFile(filaPath string) (*DKGConfig, error) {
@@ -58,11 +60,19 @@ func writeDKGResult(id string, result *dkg.Result) error {
 			Y: result.PublicKey.GetY().String(),
 		},
 		BKs: make(map[string]config.BK),
+		PartialPubKey: make(map[string]config.PartialPubKey),
+		SSid: result.SSid,
 	}
 	for peerID, bk := range result.Bks {
 		dkgResult.BKs[peerID] = config.BK{
 			X:    bk.GetX().String(),
 			Rank: bk.GetRank(),
+		}
+	}
+	for peerID, ppk := range result.PartialPubKey {
+		dkgResult.PartialPubKey[peerID] = config.PartialPubKey{
+			X: ppk.GetX().String(),
+			Y: ppk.GetY().String(),
 		}
 	}
 	err := config.WriteYamlFile(dkgResult, getFilePath(id))
