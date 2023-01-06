@@ -41,6 +41,8 @@ type ReshareResult struct {
 	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
 	Ped map[string]config.Ped `yaml:"ped"`
 	AllY  map[string]config.AllY `yaml:"ally"`
+	// for testing, output private key
+	Private config.Private `yaml:"private"`
 }
 
 func readReshareConfigFile(filaPath string) (*ReshareConfig, error) {
@@ -69,6 +71,11 @@ func writeReshareResult(id string, result *refresh.Result) error {
 		PartialPubKey: make(map[string]config.PartialPubKey),
 		Ped: make(map[string]config.Ped),
 		AllY: make(map[string]config.AllY),
+		// for testing! private key p, q to make paillierkey
+		Private: config.Private{
+			P: result.Ped.GetP().String(),
+			Q: result.Ped.GetQ().String(),
+		},
 	}
 	for peerID, ppk := range result.RefreshPartialPubKey {
 		reshareResult.PartialPubKey[peerID] = config.PartialPubKey{

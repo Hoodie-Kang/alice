@@ -35,13 +35,15 @@ type round3Data struct {
 
 // package 가 달라서 example 패키지로 export 하기 위해
 // struct field 명을 대문자로 변경해서 작업함
-// 추후에 package를 하나로 만들면 소문자로 변경 ** 예정
+// 추후에 package를 하나로 만들면 소문자로 다시 변경할 수도 있음
 type Result struct {
 	RefreshShare         *big.Int
 	RefreshPaillierKey   *paillier.Paillier
 	RefreshPartialPubKey map[string]*pt.ECPoint
 	Y                    map[string]*pt.ECPoint
 	PedParameter         map[string]*paillierzkproof.PederssenOpenParameter
+	// for testing!!
+	Ped                  *paillier.PederssenParameter
 }
 
 type round3Handler struct {
@@ -239,6 +241,8 @@ func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
 		Y:                    Y,
 		// pedParameter: N, s, t
 		PedParameter: ped,
+		// for testing!!
+		Ped: p.ped,
 	}
 	return nil, nil
 }

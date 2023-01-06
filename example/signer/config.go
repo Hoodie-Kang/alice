@@ -17,7 +17,8 @@ import (
 	"fmt"
 	"io/ioutil"
 
-	"github.com/getamis/alice/crypto/tss/ecdsa/gg18/signer"
+	signer "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
+	// signer "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
 	"gopkg.in/yaml.v2"
@@ -27,14 +28,15 @@ type SignerConfig struct {
 	Port    int64                `yaml:"port"`
 	Share   string               `yaml:"share"`
 	Pubkey  config.Pubkey        `yaml:"pubkey"`
+	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
 	BKs     map[string]config.BK `yaml:"bks"`
 	Message string               `yaml:"msg"`
 	Peers   []int64              `yaml:"peers"`
 	Threshold uint32			 `yaml:"threshold"`
-	PartialPubKey map[string]config.Pubkey `yaml:"partialpubkey`
 	SSid 	[]byte				 `yaml:"ssid"`
 	AllY    map[string]config.AllY `yaml:"ally"`
 	Ped     map[string]config.Ped  `yaml:"ped"`
+	Private config.Private       `yaml:"private"`
 	PaillierKey config.PaillierKey `yaml:"paillierkey"`
 }
 

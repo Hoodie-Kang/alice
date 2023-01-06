@@ -16,8 +16,7 @@ package signer
 import (
 	"io/ioutil"
 
-	"github.com/getamis/alice/crypto/homo/paillier"
-	// "github.com/getamis/alice/crypto/tss/ecdsa/gg18/signer"
+	// "github.com/getamis/alice/crypto/homo/paillier"
 	signer "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/alice/types"
@@ -41,22 +40,14 @@ func NewService(config *SignerConfig, pm types.PeerManager) (*service, error) {
 		done:   make(chan struct{}),
 	}
 
-	// Signer needs results from DKG.
-	dkgResult, err := utils.ConvertDKGResult(config.Pubkey, config.Share, config.BKs, config.PartialPubKey)
+	// Inputs from DKG & Refresh Results
+	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.AllY, config.Private, config.Ped, config.BKs)
 	if err != nil {
-		log.Warn("Cannot get DKG result", "err", err)
+		log.Warn("Cannot get SignInput", "err", err)
 		return nil, err
 	}
-
-	// For simplicity, we use Paillier algorithm in signer.
-	paillier, err := paillier.NewPaillier(2048)
-	if err != nil {
-		log.Warn("Cannot create a paillier function", "err", err)
-		return nil, err
-	}
-
 	// Create signer
-	signer, err := signer.NewSign(pm, dkgResult.PublicKey, paillier, dkgResult.Share, dkgResult.Bks, []byte(config.Message), s)
+	signer, err := signer.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.Y, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, []byte(config.Message), pm, s)
 	if err != nil {
 		log.Warn("Cannot create a new signer", "err", err)
 		return nil, err

@@ -23,6 +23,11 @@ type Pubkey struct {
 	X string `yaml:"x"`
 	Y string `yaml:"y"`
 }
+// for testing
+type Private struct {
+	P string `yaml:"p"`
+	Q string `yaml:"q"`
+}
 
 // type Privatekey struct {
 // 	Lambda string `yaml:"lambda"`
