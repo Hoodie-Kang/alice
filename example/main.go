@@ -18,21 +18,23 @@ import (
 	"os"
 
 	"github.com/getamis/alice/example/dkg"
-	"github.com/getamis/alice/example/reshare"
-	"github.com/getamis/alice/example/signer"
+	"github.com/getamis/alice/example/refresh"
+	"github.com/getamis/alice/example/sign"
+	"github.com/getamis/alice/example/signSix"
 	"github.com/spf13/cobra"
 )
 
 var cmd = &cobra.Command{
 	Use:   "tss-example",
 	Short: "TSS example",
-	Long:  `This is a tss example`,
+	Long:  `This is a tss-cggmp example`,
 }
 
 func init() {
 	cmd.AddCommand(dkg.Cmd)
-	cmd.AddCommand(signer.Cmd)
-	cmd.AddCommand(reshare.Cmd)
+	cmd.AddCommand(refresh.Cmd)
+	cmd.AddCommand(sign.Cmd)
+	cmd.AddCommand(signSix.Cmd)
 }
 
 func main() {

@@ -11,7 +11,7 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package reshare
+package signSix
 
 import (
 	"github.com/getamis/alice/example/peer"
@@ -22,21 +22,21 @@ import (
 	"github.com/spf13/viper"
 )
 
-const reshareProtocol = "/reshare/1.0.0"
+const signSixProtocol = "/signSix/1.0.0"
 
 var configFile string
 
 var Cmd = &cobra.Command{
-	Use:   "reshare",
-	Short: "Reshare process",
-	Long:  `Refresh the secret share without changing the public key.`,
+	Use:   "signSix",
+	Short: "SignSix process",
+	Long:  `Signing(6 Round) for using the secret shares to generate a signature.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := initService(cmd)
 		if err != nil {
 			log.Crit("Failed to init", "err", err)
 		}
 
-		c, err := readReshareConfigFile(configFile)
+		c, err := readSignSixConfigFile(configFile)
 		if err != nil {
 			log.Crit("Failed to read config file", "configFile", configFile, "err", err)
 		}
@@ -48,7 +48,7 @@ var Cmd = &cobra.Command{
 		}
 
 		// Create a new peer manager.
-		pm := peer.NewPeerManager(utils.GetPeerIDFromPort(c.Port), host, reshareProtocol)
+		pm := peer.NewPeerManager(utils.GetPeerIDFromPort(c.Port), host, signSixProtocol)
 		err = pm.AddPeers(c.Peers)
 		if err != nil {
 			log.Crit("Failed to add peers", "err", err)
@@ -60,14 +60,14 @@ var Cmd = &cobra.Command{
 			log.Crit("Failed to new service", "err", err)
 		}
 		// Set a stream handler on the host.
-		host.SetStreamHandler(reshareProtocol, func(s network.Stream) {
+		host.SetStreamHandler(signSixProtocol, func(s network.Stream) {
 			service.Handle(s)
 		})
 
-		// Ensure all peers are connected before starting reshare process.
+		// Ensure all peers are connected before starting signSix process.
 		pm.EnsureAllConnected()
 
-		// Start reshare process.
+		// Start signSix process.
 		service.Process()
 
 		return nil
@@ -75,7 +75,7 @@ var Cmd = &cobra.Command{
 }
 
 func init() {
-	Cmd.Flags().String("config", "", "reshare config file path")
+	Cmd.Flags().String("config", "", "signSix config file path")
 }
 
 func initService(cmd *cobra.Command) error {

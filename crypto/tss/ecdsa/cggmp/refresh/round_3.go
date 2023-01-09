@@ -44,6 +44,8 @@ type Result struct {
 	PedParameter         map[string]*paillierzkproof.PederssenOpenParameter
 	// for testing!!
 	Ped                  *paillier.PederssenParameter
+	// El-Gamal Key? for SignSix
+	YSecret              *big.Int
 }
 
 type round3Handler struct {
@@ -243,6 +245,7 @@ func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
 		PedParameter: ped,
 		// for testing!!
 		Ped: p.ped,
+		YSecret: p.y,
 	}
 	return nil, nil
 }

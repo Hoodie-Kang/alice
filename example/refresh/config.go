@@ -42,6 +42,8 @@ type RefreshResult struct {
 	AllY  map[string]config.AllY `yaml:"ally"`
 	// for testing, output private key
 	Private config.Private `yaml:"private"`
+	// YSecret for SignSix
+	YSecret string `yaml:"ysecret"`
 }
 
 func readRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
@@ -75,6 +77,7 @@ func writeRefreshResult(id string, result *refresh.Result) error {
 			P: result.Ped.GetP().String(),
 			Q: result.Ped.GetQ().String(),
 		},
+		YSecret: result.YSecret.String(),
 	}
 	for peerID, ppk := range result.RefreshPartialPubKey {
 		refreshResult.PartialPubKey[peerID] = config.PartialPubKey{

@@ -11,20 +11,19 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package signer
+package signSix
 
 import (
 	"fmt"
 	"io/ioutil"
 
-	signer "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
-	// signer "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/signSix"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
 	"gopkg.in/yaml.v2"
 )
 
-type SignerConfig struct {
+type SignSixConfig struct {
 	Port    int64                `yaml:"port"`
 	Share   string               `yaml:"share"`
 	Pubkey  config.Pubkey        `yaml:"pubkey"`
@@ -37,16 +36,17 @@ type SignerConfig struct {
 	AllY    map[string]config.AllY `yaml:"ally"`
 	Ped     map[string]config.Ped  `yaml:"ped"`
 	Private config.Private       `yaml:"private"`
-	PaillierKey config.PaillierKey `yaml:"paillierkey"`
+	// PaillierKey config.PaillierKey `yaml:"paillierkey"`
+	YSecret string `yaml:"ysecret"`
 }
 
-type SignerResult struct {
+type SignResult struct {
 	R string `yaml:"r"`
 	S string `yaml:"s"`
 }
 
-func readSignerConfigFile(filaPath string) (*SignerConfig, error) {
-	c := &SignerConfig{}
+func readSignSixConfigFile(filaPath string) (*SignSixConfig, error) {
+	c := &SignSixConfig{}
 	yamlFile, err := ioutil.ReadFile(filaPath)
 	if err != nil {
 		return nil, err
@@ -59,12 +59,12 @@ func readSignerConfigFile(filaPath string) (*SignerConfig, error) {
 	return c, nil
 }
 
-func writeSignerResult(id string, result *signer.Result) error {
-	signerResult := &SignerResult{
+func writeSignResult(id string, result *signSix.Result) error {
+	signResult := &SignResult{
 		R: result.R.String(),
 		S: result.S.String(),
 	}
-	err := config.WriteYamlFile(signerResult, getFilePath(id))
+	err := config.WriteYamlFile(signResult, getFilePath(id))
 	if err != nil {
 		log.Error("Cannot write YAML file", "err", err)
 		return err
@@ -73,5 +73,5 @@ func writeSignerResult(id string, result *signer.Result) error {
 }
 
 func getFilePath(id string) string {
-	return fmt.Sprintf("signer/%s-output.yaml", id)
+	return fmt.Sprintf("signSix/%s-output.yaml", id)
 }

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//   http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -21,13 +21,13 @@ import (
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	"github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/elliptic"
+	"github.com/getamis/alice/crypto/homo/paillier"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
+	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
-	"github.com/getamis/alice/crypto/homo/paillier"
-	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
-
 )
+
 // For sign input
 // ped 사용해서 paillierkey 만드는 방식으로 결과를 만드는중 -- 수정 필요!!
 type SignInput struct {
@@ -38,6 +38,7 @@ type SignInput struct {
 	Y             map[string]*ecpointgrouplaw.ECPoint
 	PedParameter  map[string]*paillierzkproof.PederssenOpenParameter
 	PaillierKey   *paillier.Paillier
+	YSecret       *big.Int
 }
 
 var (
@@ -124,7 +125,7 @@ func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[strin
 // ConvertSignInput converts SingInput(=DKG&Refresh result) from config.
 // paillierKey *paillier.Paillier 를 직접 받아오지 못하기 때문에, 일단 PedPara 즉, p q 값을 가져와서 paillierkey 를 만들어서 사용함.
 // -> 이 방식은 private key를 드러내는 위험한 방식이므로 테스트 후 key가 드러나지 않게 가져오는 방법으로 반드시 수정해야함.
-func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[string]config.PartialPubKey, cfgAllYs map[string]config.AllY, cfgPriv config.Private, cfgPed map[string]config.Ped, cfgBKs map[string]config.BK) (*SignInput, error) {
+func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[string]config.PartialPubKey, cfgAllYs map[string]config.AllY, cfgPriv config.Private, cfgPed map[string]config.Ped, cfgBKs map[string]config.BK, cfgYSec string) (*SignInput, error) {
 	// Build public key.
 	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
 	if !ok {
@@ -153,7 +154,9 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 	q, _ := new(big.Int).SetString(cfgPriv.Q, 10)
 	// build paillierkey using ped-> p, q
 	paillierKey, _ := paillier.NewPaillierWithGivenPrimes(p, q)
-
+	// build ysecret
+	ysec, _ := new(big.Int).SetString(cfgYSec, 10)
+	
 	signInput := &SignInput{
 		PublicKey:     pubkey,
 		Share:         share,
@@ -163,6 +166,7 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 		PedParameter:  make(map[string]*paillierzkproof.PederssenOpenParameter),
 		// for testing!! - private key
 		PaillierKey:   paillierKey,
+		YSecret:       ysec,
 	}
 
 	// Build bks.
