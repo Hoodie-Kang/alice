@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
@@ -35,6 +36,11 @@ type DKGResult struct {
 	Pubkey config.Pubkey        `yaml:"pubkey"`
 	BKs    map[string]config.BK `yaml:"bks"`
 	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
+	PaillierKey config.PaillierKey `yaml:"paillierKey"`
+	Ped map[string]config.Ped   `yaml:"ped"`
+	AllY map[string]config.AllY `yaml:"ally"`
+	Private config.Private      `yaml:"private"`
+	YSecret string 				`yaml:"ysecret"`
 	SSid    []byte               `yaml:"ssid"`
 }
 
@@ -76,6 +82,64 @@ func writeDKGResult(id string, result *dkg.Result) error {
 		}
 	}
 	err := config.WriteYamlFile(dkgResult, getFilePath(id))
+	if err != nil {
+		log.Error("Cannot write YAML file", "err", err)
+		return err
+	}
+	return nil
+}
+
+func writeDKGRefreshResult(id string, refreshInput *dkg.Result, result *refresh.Result) error {
+	refreshResult := &DKGResult{
+		Share: result.RefreshShare.String(),
+		Pubkey: config.Pubkey{
+			X: refreshInput.PublicKey.GetX().String(),
+			Y: refreshInput.PublicKey.GetY().String(),
+		},
+		BKs: make(map[string]config.BK),
+		PartialPubKey: make(map[string]config.PartialPubKey),
+		// output.yaml 작성을 위해서 paillierKey.pubkey 만 공개함
+		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
+		PaillierKey: config.PaillierKey{
+			N: result.RefreshPaillierKey.GetN().String(),
+			G: result.RefreshPaillierKey.GetG().String(),
+		},
+		Ped: make(map[string]config.Ped),
+		AllY: make(map[string]config.AllY),
+		// for testing! private key p, q to make paillierkey
+		Private: config.Private{
+			P: result.Ped.GetP().String(),
+			Q: result.Ped.GetQ().String(),
+		},
+		YSecret: result.YSecret.String(),	
+		SSid: refreshInput.SSid,
+	}
+	for peerID, bk := range refreshInput.Bks {
+		refreshResult.BKs[peerID] = config.BK{
+			X:    bk.GetX().String(),
+			Rank: bk.GetRank(),
+		}
+	}
+	for peerID, ppk := range result.RefreshPartialPubKey {
+		refreshResult.PartialPubKey[peerID] = config.PartialPubKey{
+			X: ppk.GetX().String(),
+			Y: ppk.GetY().String(),
+		}
+	}
+	for peerID, ped := range result.PedParameter {
+		refreshResult.Ped[peerID] = config.Ped{
+			N: ped.Getn().String(),
+			S: ped.Gets().String(),
+			T: ped.Gett().String(),
+		}
+	}
+	for peerID, y := range result.Y {
+		refreshResult.AllY[peerID] = config.AllY{
+			X: y.GetX().String(),
+			Y: y.GetY().String(),
+		}
+	}
+	err := config.WriteYamlFile(refreshResult, getFilePath(id))
 	if err != nil {
 		log.Error("Cannot write YAML file", "err", err)
 		return err

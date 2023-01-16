@@ -23,6 +23,7 @@ import (
 )
 
 const dkgProtocol = "/dkg/1.0.0"
+const refreshProtocol = "/refresh/1.0.0"
 
 var configFile string
 
@@ -70,6 +71,33 @@ var Cmd = &cobra.Command{
 		// Start DKG process.
 		service.Process()
 
+		// For refresh //
+		dkgResult, _ := service.dkg.GetResult()
+		_ = host.Close()
+		host, err = peer.MakeBasicHost(config.Port)
+		if err != nil {
+			log.Crit("Failed to create a basic host", "err", err)
+		}
+		// Create a new peer manager.
+		pm2 := peer.NewPeerManager(utils.GetPeerIDFromPort(config.Port), host, refreshProtocol)
+		err = pm2.AddPeers(config.Peers)
+		if err != nil {
+			log.Crit("Failed to add peers", "err", err)
+		}
+		// Create a new service.
+		// wait until other peer get ready
+		refreshService, err := NewRefreshService(dkgResult, pm2)
+		if err != nil {
+			log.Crit("Failed to new service", "err", err)
+		}
+		// Set a stream handler on the host.
+		host.SetStreamHandler(refreshProtocol, func(s network.Stream) {
+			refreshService.Handle(s)
+		})
+		// Ensure all peers are connected before starting DKG process.
+		pm2.EnsureAllConnected()
+
+		refreshService.Process()
 		return nil
 	},
 }

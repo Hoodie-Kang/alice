@@ -16,6 +16,7 @@ package refresh
 
 import (
 	"math/big"
+	"time"
 
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	ecpointgrouplaw "github.com/getamis/alice/crypto/ecpointgrouplaw"
@@ -63,7 +64,9 @@ func (d *Refresh) GetResult() (*Result, error) {
 
 func (d *Refresh) Start() {
 	d.MessageMain.Start()
-
+	// input 처리 시간을 주면 cannot create new stream err 가 발생하지 않아서 이렇게 해결함.
+	// 필요하다면(가능하다면) 시간을 더 늘려서 해결
+	time.Sleep(5 * time.Second)
 	// Send the first message to new peer
 	cggmp.Broadcast(d.ph.peerManager, d.ph.getRound1Message())
 }
