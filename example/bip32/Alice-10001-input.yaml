@@ -1,0 +1,5 @@
+role: Alice
+port: 10001
+rank: 0
+peer:
+  - 10002

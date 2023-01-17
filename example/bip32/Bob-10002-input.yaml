@@ -1,0 +1,5 @@
+role: Bob
+port: 10002
+rank: 0
+peer:
+  - 10001

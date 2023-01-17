@@ -21,6 +21,7 @@ import (
 	"github.com/getamis/alice/example/refresh"
 	"github.com/getamis/alice/example/sign"
 	"github.com/getamis/alice/example/signSix"
+	"github.com/getamis/alice/example/bip32/master"
 	"github.com/spf13/cobra"
 )
 
@@ -35,6 +36,8 @@ func init() {
 	cmd.AddCommand(refresh.Cmd)
 	cmd.AddCommand(sign.Cmd)
 	cmd.AddCommand(signSix.Cmd)
+	// to support 2 party bip32
+	cmd.AddCommand(master.Cmd)
 }
 
 func main() {
