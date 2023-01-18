@@ -11,12 +11,13 @@
 // WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 // See the License for the specific language governing permissions and
 // limitations under the License.
-package master
+package child
 
 import (
 	"io/ioutil"
 
-	"github.com/getamis/alice/crypto/bip32/master"
+	"github.com/getamis/alice/crypto/bip32/child"
+	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
@@ -24,35 +25,44 @@ import (
 )
 
 type service struct {
-	config *MasterConfig
+	config *ChildConfig
 	pm     types.PeerManager
 
-	master  *master.Master
+	child  *child.Child
 	done chan struct{}
 }
 
-func NewService(config *MasterConfig, pm types.PeerManager) (*service, error) {
+func NewService(config *ChildConfig, pm types.PeerManager) (*service, error) {
 	s := &service{
 		config: config,
 		pm:     pm,
 		done:   make(chan struct{}),
 	}
+
+	// Child nees results from Master.
+	masterResult, err := utils.ConvertMasterResult(config.Role, config.Pubkey, config.Share, config.BKs, config.Seed, config.ChainCode)
+	if err != nil {
+		log.Warn("Cannot get Master result", "err", err)
+		return nil, err
+	}
+	// fix me! childIndex ? clarify the meaning and the usage
+	childIndex := uint32(2147483648)
 	// fix me! sid need to be different?
-	sid := []byte("mastrsid")
+	sid := []byte("childsid")
 	if config.Role == "Alice" {
-		m, err := master.NewAlice(pm, sid, config.Rank, circuitPath, s)
+		c, err := child.NewAlice(pm, sid, masterResult.Share, masterResult.Bks, circuitPath, masterResult.ChainCode, config.Depth, childIndex, masterResult.PublicKey, s)
 		if err != nil {
-			log.Warn("Cannot create a new Alice", "config", config, "err", err)
+			log.Warn("Cannot create a new child - Alice", "config", config, "err", err)
 			return nil, err
 		}
-		s.master = m
+		s.child = c
 	} else if config.Role == "Bob" {
-		m, err := master.NewBob(pm, sid, config.Rank, circuitPath, s)
+		c, err := child.NewBob(pm, sid, masterResult.Share, masterResult.Bks, circuitPath, masterResult.ChainCode, config.Depth, childIndex, masterResult.PublicKey, s)
 		if err != nil {
-			log.Warn("Cannot create a new Bob", "config", config, "err", err)
+			log.Warn("Cannot create a new child - Bob", "config", config, "err", err)
 			return nil, err
 		}
-		s.master = m
+		s.child = c
 	} else {
 		log.Warn("Role must be Alice or Bob", "err", nil)
 		return nil, nil
@@ -61,7 +71,7 @@ func NewService(config *MasterConfig, pm types.PeerManager) (*service, error) {
 }
 
 func (p *service) Handle(s network.Stream) {
-	data := &master.Message{}
+	data := &child.Message{}
 	buf, err := ioutil.ReadAll(s)
 	if err != nil {
 		log.Warn("Cannot read data from stream", "err", err)
@@ -77,34 +87,34 @@ func (p *service) Handle(s network.Stream) {
 	}
 
 	log.Info("Received request", "from", s.Conn().RemotePeer())
-	err = p.master.AddMessage(data.GetId(), data)
+	err = p.child.AddMessage(data.GetId(), data)
 	if err != nil {
-		log.Warn("Cannot add message to Master", "err", err)
+		log.Warn("Cannot add message to Child", "err", err)
 		return
 	}
 }
 
 func (p *service) Process() {
-	// 1. Start a master process.
-	p.master.Start()
-	defer p.master.Stop()
+	// 1. Start a child process.
+	p.child.Start()
+	defer p.child.Stop()
 
-	// 2. Wait the master is done or failed
+	// 2. Wait the child is done or failed
 	<-p.done
 }
 
 func (p *service) OnStateChanged(oldState types.MainState, newState types.MainState) {
 	if newState == types.StateFailed {
-		log.Error("New Master failed", "old", oldState.String(), "new", newState.String())
+		log.Error("New Child failed", "old", oldState.String(), "new", newState.String())
 		close(p.done)
 		return
 	} else if newState == types.StateDone {
-		log.Info("New Master done", "old", oldState.String(), "new", newState.String())
-		result, err := p.master.GetResult()
+		log.Info("New Child done", "old", oldState.String(), "new", newState.String())
+		result, err := p.child.GetResult()
 		if err == nil {
-			writeMasterResult(p.config, result)
+			writeChildResult(p.config, result)
 		} else {
-			log.Warn("Failed to get result from Master", "err", err)
+			log.Warn("Failed to get result from Child", "err", err)
 		}
 		close(p.done)
 		return

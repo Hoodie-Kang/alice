@@ -38,6 +38,8 @@ var (
 )
 
 type Result struct {
+	// Share to use for signing
+	Share     *big.Int
 	Translate *big.Int
 	PublicKey *ecpointgrouplaw.ECPoint
 	ChainCode []byte
@@ -107,6 +109,8 @@ func (m *Child) GetResult() (*Result, error) {
 		return nil, ErrNotReady
 	}
 	return &Result{
+		// Share to use for signing
+		Share:     rh.childShare.share,
 		Translate: rh.childShare.translate,
 		PublicKey: rh.childShare.publicKey,
 		ChainCode: rh.childShare.chainCode,
