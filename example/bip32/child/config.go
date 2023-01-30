@@ -24,7 +24,7 @@ import (
 )
 
 type ChildConfig struct {
-	Role      string                `yaml:"role"`
+	Role       string               `yaml:"role"`
 	Port       int64                `yaml:"port"`
 	Peer       []int64              `yaml:"peer"`
 	Pubkey     config.Pubkey        `yaml:"pubkey"`
@@ -37,11 +37,11 @@ type ChildConfig struct {
 }
 
 type ChildResult struct {
-	Share      string           `yaml:"share"`
-	Translate  string           `yaml:"translate"`
-	Pubkey     config.Pubkey    `yaml:"pubkey"`
-	ChainCode  []byte			`yaml:"chain-code"`
-	Depth      byte			    `yaml:"depth"`
+	Share      string           	`yaml:"share"`
+	Translate  string           	`yaml:"translate"`
+	Pubkey     config.Pubkey    	`yaml:"pubkey"`
+	ChainCode  []byte				`yaml:"chain-code"`
+	Depth      byte			    	`yaml:"depth"`
 }
 
 func readChildConfigFile(filaPath string) (*ChildConfig, error) {

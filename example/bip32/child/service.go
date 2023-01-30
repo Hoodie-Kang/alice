@@ -39,7 +39,7 @@ func NewService(config *ChildConfig, pm types.PeerManager) (*service, error) {
 		done:   make(chan struct{}),
 	}
 
-	// Child nees results from Master.
+	// Child need results from Master.
 	masterResult, err := utils.ConvertMasterResult(config.Role, config.Pubkey, config.Share, config.BKs, config.Seed, config.ChainCode)
 	if err != nil {
 		log.Warn("Cannot get Master result", "err", err)

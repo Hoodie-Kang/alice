@@ -23,6 +23,7 @@ import (
 	"github.com/getamis/alice/example/signSix"
 	"github.com/getamis/alice/example/bip32/master"
 	"github.com/getamis/alice/example/bip32/child"
+	"github.com/getamis/alice/example/signer"
 	"github.com/spf13/cobra"
 )
 
@@ -40,6 +41,8 @@ func init() {
 	// to support 2 party bip32
 	cmd.AddCommand(master.Cmd)
 	cmd.AddCommand(child.Cmd)
+	// testing GG18 signer for bip32
+	cmd.AddCommand(signer.Cmd)
 }
 
 func main() {

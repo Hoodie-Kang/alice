@@ -15,6 +15,8 @@
 package signer
 
 import (
+	"crypto/ecdsa"
+	"errors"
 	"math/big"
 
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
@@ -81,6 +83,11 @@ func (s *Signer) GetResult() (*Result, error) {
 	if !ok {
 		log.Error("We cannot convert to result handler in done state")
 		return nil, tss.ErrNotReady
+	}
+	// to verify is correct signature
+	isCorrectSig := ecdsa.Verify(rh.publicKey.ToPubKey(), rh.msg, rh.r.GetX(), rh.s)
+	if !isCorrectSig {
+		return nil, errors.New("incorrect sig")
 	}
 
 	return &Result{

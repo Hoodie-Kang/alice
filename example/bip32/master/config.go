@@ -18,6 +18,8 @@ import (
 	"io/ioutil"
 
 	"github.com/getamis/alice/crypto/bip32/master"
+	// "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
+	// "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
 	"gopkg.in/yaml.v2"
@@ -39,6 +41,19 @@ type MasterResult struct {
 	BKs    map[string]config.BK `yaml:"bks"`	
 	Seed      []byte			`yaml:"seed"`
 	ChainCode []byte			`yaml:"chain-code"`
+}
+
+type DKGResult struct {
+	Share  string               `yaml:"share"`
+	Pubkey config.Pubkey        `yaml:"pubkey"`
+	BKs    map[string]config.BK `yaml:"bks"`
+	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
+	PaillierKey config.PaillierKey `yaml:"paillierKey"`
+	Ped map[string]config.Ped   `yaml:"ped"`
+	AllY map[string]config.AllY `yaml:"ally"`
+	Private config.Private      `yaml:"private"`
+	YSecret string 				`yaml:"ysecret"`
+	SSid    []byte               `yaml:"ssid"`
 }
 
 func readMasterConfigFile(filaPath string) (*MasterConfig, error) {
