@@ -38,10 +38,11 @@ var (
 )
 
 type Result struct {
-	// Share to use for signing
+	// Share, BKs to use for signing
 	Share     *big.Int
 	Translate *big.Int
-	PublicKey *ecpointgrouplaw.ECPoint
+	PublicKey *ecpointgrouplaw.ECPoint       
+	BKs       map[string]*birkhoffinterpolation.BkParameter
 	ChainCode []byte
 	Depth     byte
 }
@@ -108,11 +109,17 @@ func (m *Child) GetResult() (*Result, error) {
 		log.Error("We cannot convert to otSendResponse handler in done state")
 		return nil, ErrNotReady
 	}
+	bks := make(map[string]*birkhoffinterpolation.BkParameter, 2)
+	bks[m.ih.selfId] = rh.childShare.bks[0]
+	for id, _ := range m.ih.peers {
+		bks[id] = rh.childShare.bks[1]
+	}
 	return &Result{
 		// Share to use for signing
 		Share:     rh.childShare.share,
 		Translate: rh.childShare.translate,
 		PublicKey: rh.childShare.publicKey,
+		BKs:       bks,
 		ChainCode: rh.childShare.chainCode,
 		Depth:     rh.childShare.depth,
 	}, nil

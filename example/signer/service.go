@@ -15,7 +15,6 @@ package signer
 
 import (
 	"io/ioutil"
-	"fmt"
 
 	"github.com/getamis/alice/crypto/homo/paillier"
 	"github.com/getamis/alice/crypto/tss/ecdsa/gg18/signer"
@@ -46,7 +45,6 @@ func NewService(config *SignerConfig, pm types.PeerManager) (*service, error) {
 		log.Warn("Cannot get DKG result", "err", err)
 		return nil, err
 	}
-	fmt.Println(dkgResult)
 	// For simplicity, we use Paillier algorithm in signer.
 	paillier, err := paillier.NewPaillier(2048)
 	if err != nil {

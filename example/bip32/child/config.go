@@ -40,6 +40,7 @@ type ChildResult struct {
 	Share      string           	`yaml:"share"`
 	Translate  string           	`yaml:"translate"`
 	Pubkey     config.Pubkey    	`yaml:"pubkey"`
+	BKs        map[string]config.BK `yaml:"bks"`
 	ChainCode  []byte				`yaml:"chain-code"`
 	Depth      byte			    	`yaml:"depth"`
 }
@@ -66,10 +67,16 @@ func writeChildResult(con *ChildConfig, result *child.Result) error {
 			X: result.PublicKey.GetX().String(),
 			Y: result.PublicKey.GetY().String(),
 		},
+		BKs: make(map[string]config.BK),
 		ChainCode: result.ChainCode,
 		Depth: result.Depth,
 	}
-
+	for peerID, bk := range result.BKs {
+		childResult.BKs[peerID] = config.BK{
+			X:    bk.GetX().String(),
+			Rank: bk.GetRank(),
+		}
+	}
 	err := config.WriteYamlFile(childResult, getFilePath(con.Role, con.Port))
 	if err != nil {
 		log.Error("Cannot write YAML file", "err", err)
