@@ -15,6 +15,8 @@ package sign
 
 import (
 	"io/ioutil"
+	"encoding/hex"
+	"fmt"
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
 	"github.com/getamis/alice/example/utils"
@@ -45,12 +47,16 @@ func NewService(config *SignConfig, pm types.PeerManager) (*service, error) {
 		log.Warn("Cannot get SignInput", "err", err)
 		return nil, err
 	}
+
+	msg, _ := hex.DecodeString(config.Message)
+	fmt.Printf("% x", msg)
 	// Create sign
-	sign, err := sign.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.Y, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, []byte(config.Message), pm, s)
+	sign, err := sign.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.Y, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, msg, pm, s)
 	if err != nil {
 		log.Warn("Cannot create a new sign", "err", err)
 		return nil, err
 	}
+	fmt.Println([]byte(msg));
 	s.sign = sign
 	return s, nil
 }

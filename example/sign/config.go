@@ -42,6 +42,7 @@ type SignConfig struct {
 type SignResult struct {
 	R string `yaml:"r"`
 	S string `yaml:"s"`
+	V uint `yaml:"v"`
 }
 
 func readSignConfigFile(filaPath string) (*SignConfig, error) {
@@ -62,6 +63,7 @@ func writeSignResult(id string, result *sign.Result) error {
 	signResult := &SignResult{
 		R: result.R.String(),
 		S: result.S.String(),
+		V: result.V,
 	}
 	err := config.WriteYamlFile(signResult, getFilePath(id))
 	if err != nil {

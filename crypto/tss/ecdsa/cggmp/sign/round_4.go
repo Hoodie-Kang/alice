@@ -37,6 +37,7 @@ var (
 type Result struct {
 	R *big.Int
 	S *big.Int
+	V uint
 }
 
 type round4Data struct {
@@ -101,6 +102,12 @@ func (p *round4Handler) Finalize(logger log.Logger) (types.Handler, error) {
 	if s.Cmp(big0) == 0 {
 		return nil, ErrZeroS
 	}
+	id := p.R.GetY().Bit(0)
+	if s.Cmp(new(big.Int).Rsh(curveN, 1)) > 0 {
+		s = new(big.Int).Neg(s)
+		s = s.Add(curveN, s)
+		id = id ^ 1
+	}
 
 	// Verify that (r,s) is a correct signature
 	isCorrectSig := ecdsa.Verify(p.pubKey.ToPubKey(), p.msg, p.R.GetX(), s)
@@ -114,6 +121,7 @@ func (p *round4Handler) Finalize(logger log.Logger) (types.Handler, error) {
 	p.result = &Result{
 		R: p.R.GetX(),
 		S: s,
+		V: id,
 	}
 	return nil, nil
 }
