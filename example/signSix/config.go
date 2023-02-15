@@ -24,25 +24,26 @@ import (
 )
 
 type SignSixConfig struct {
-	Port    int64                `yaml:"port"`
-	Share   string               `yaml:"share"`
-	Pubkey  config.Pubkey        `yaml:"pubkey"`
+	Port    int64                                 `yaml:"port"`
+	Share   string                                `yaml:"share"`
+	Pubkey  config.Pubkey                         `yaml:"pubkey"`
 	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	BKs     map[string]config.BK `yaml:"bks"`
-	Message string               `yaml:"msg"`
-	Peers   []int64              `yaml:"peers"`
-	Threshold uint32			 `yaml:"threshold"`
-	SSid 	[]byte				 `yaml:"ssid"`
-	AllY    map[string]config.AllY `yaml:"ally"`
-	Ped     map[string]config.Ped  `yaml:"ped"`
-	Private config.Private       `yaml:"private"`
-	// PaillierKey config.PaillierKey `yaml:"paillierkey"`
-	YSecret string `yaml:"ysecret"`
+	BKs     map[string]config.BK                  `yaml:"bks"`
+	Peers   []int64                               `yaml:"peers"`
+	Threshold uint32			                  `yaml:"threshold"`
+	SSid 	[]byte				                  `yaml:"ssid"`
+	AllY    map[string]config.AllY                `yaml:"ally"`
+	Ped     map[string]config.Ped                 `yaml:"ped"`
+	PaillierKey config.PaillierKey                `yaml:"paillierKey"`
+	YSecret string                                `yaml:"ysecret"`
+	Message string               
+
 }
 
 type SignResult struct {
 	R string `yaml:"r"`
 	S string `yaml:"s"`
+	V uint   `yaml:"v"`
 }
 
 func readSignSixConfigFile(filaPath string) (*SignSixConfig, error) {
@@ -63,6 +64,7 @@ func writeSignResult(id string, result *signSix.Result) error {
 	signResult := &SignResult{
 		R: result.R.String(),
 		S: result.S.String(),
+		V: result.V,
 	}
 	err := config.WriteYamlFile(signResult, getFilePath(id))
 	if err != nil {

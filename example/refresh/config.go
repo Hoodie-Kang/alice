@@ -24,26 +24,31 @@ import (
 )
 
 type RefreshConfig struct {
-	Port      int64                `yaml:"port"`
-	Threshold uint32               `yaml:"threshold"`
-	Share     string               `yaml:"share"`
-	Pubkey    config.Pubkey        `yaml:"pubkey"`
-	BKs       map[string]config.BK `yaml:"bks"`
-	Peers     []int64              `yaml:"peers"`
-	PartialPubkey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	SSid      []byte			   `yaml:"ssid"`
+	Port      int64                               `yaml:"port"`
+	Rank      uint32                              `yaml:"rank"`
+	Threshold uint32                              `yaml:"threshold"`
+	Peers     []int64 			                  `yaml:"peers"`
+	Share     string                              `yaml:"share"`
+	Pubkey    config.Pubkey                       `yaml:"pubkey"`
+	BKs       map[string]config.BK                `yaml:"bks"`
+	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
+	SSid      []byte			                  `yaml:"ssid"`
 }
 
 type RefreshResult struct {
-	Share string `yaml:"share"`
-	PaillierKey config.PaillierKey `yaml:"paillierKey"`
+	Port      int64                               `yaml:"port"`
+	Rank      uint32                              `yaml:"rank"`
+	Threshold uint32                              `yaml:"threshold"`
+	Peers     []int64                             `yaml:"peers"`
+	Share  string                                 `yaml:"share"`
+	Pubkey config.Pubkey                          `yaml:"pubkey"`
+	BKs    map[string]config.BK                   `yaml:"bks"`
 	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	Ped map[string]config.Ped `yaml:"ped"`
-	AllY  map[string]config.AllY `yaml:"ally"`
-	// for testing, output private key
-	Private config.Private `yaml:"private"`
-	// YSecret for SignSix
-	YSecret string `yaml:"ysecret"`
+	Ped map[string]config.Ped                     `yaml:"ped"`
+	AllY map[string]config.AllY                   `yaml:"ally"`
+	PaillierKey config.PaillierKey                `yaml:"paillierKey"`
+	YSecret string 				                  `yaml:"ysecret"`
+	SSid    []byte                                `yaml:"ssid"`
 }
 
 func readRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
@@ -60,24 +65,36 @@ func readRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
 	return c, nil
 }
 
-func writeRefreshResult(id string, result *refresh.Result) error {
+func writeRefreshResult(id string, input *RefreshConfig, result *refresh.Result) error {
 	refreshResult := &RefreshResult{
+		Port: input.Port,
+		Rank: input.Rank,
+		Threshold: input.Threshold,
+		Peers: input.Peers,
 		Share: result.RefreshShare.String(),
-		// output.yaml 작성을 위해서 paillierKey.pubkey 만 공개함
+		Pubkey: config.Pubkey{
+			X: input.Pubkey.X,
+			Y: input.Pubkey.Y,
+		},
+		BKs: make(map[string]config.BK),
+		PartialPubKey: make(map[string]config.PartialPubKey),
+		// for testing! private key p, q to make paillierkey
 		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
 		PaillierKey: config.PaillierKey{
-			N: result.RefreshPaillierKey.GetN().String(),
-			G: result.RefreshPaillierKey.GetG().String(),
-		},
-		PartialPubKey: make(map[string]config.PartialPubKey),
-		Ped: make(map[string]config.Ped),
-		AllY: make(map[string]config.AllY),
-		// for testing! private key p, q to make paillierkey
-		Private: config.Private{
 			P: result.Ped.GetP().String(),
 			Q: result.Ped.GetQ().String(),
 		},
-		YSecret: result.YSecret.String(),
+		Ped: make(map[string]config.Ped),
+		AllY: make(map[string]config.AllY),
+
+		YSecret: result.YSecret.String(),	
+		SSid: input.SSid,
+	}
+	for peerID, bk := range input.BKs {
+		refreshResult.BKs[peerID] = config.BK{
+			X:    bk.X,
+			Rank: bk.Rank,
+		}
 	}
 	for peerID, ppk := range result.RefreshPartialPubKey {
 		refreshResult.PartialPubKey[peerID] = config.PartialPubKey{

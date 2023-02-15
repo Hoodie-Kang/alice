@@ -20,6 +20,7 @@ import (
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/example/config"
+	re "github.com/getamis/alice/example/refresh"
 	"github.com/getamis/sirius/log"
 	"gopkg.in/yaml.v2"
 )
@@ -29,19 +30,6 @@ type DKGConfig struct {
 	Rank      uint32  `yaml:"rank"`
 	Threshold uint32  `yaml:"threshold"`
 	Peers     []int64 `yaml:"peers"`
-}
-
-type DKGResult struct {
-	Share  string               `yaml:"share"`
-	Pubkey config.Pubkey        `yaml:"pubkey"`
-	BKs    map[string]config.BK `yaml:"bks"`
-	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	PaillierKey config.PaillierKey `yaml:"paillierKey"`
-	Ped map[string]config.Ped   `yaml:"ped"`
-	AllY map[string]config.AllY `yaml:"ally"`
-	Private config.Private      `yaml:"private"`
-	YSecret string 				`yaml:"ysecret"`
-	SSid    []byte               `yaml:"ssid"`
 }
 
 func readDKGConfigFile(filaPath string) (*DKGConfig, error) {
@@ -58,8 +46,12 @@ func readDKGConfigFile(filaPath string) (*DKGConfig, error) {
 	return c, nil
 }
 
-func writeDKGResult(id string, result *dkg.Result) error {
-	dkgResult := &DKGResult{
+func writeDKGResult(id string, c *DKGConfig, result *dkg.Result) error {
+	dkgResult := &re.RefreshConfig{
+		Port: c.Port,
+		Rank: c.Rank,
+		Threshold: c.Threshold,
+		Peers: c.Peers,
 		Share: result.Share.String(),
 		Pubkey: config.Pubkey{
 			X: result.PublicKey.GetX().String(),
@@ -81,7 +73,7 @@ func writeDKGResult(id string, result *dkg.Result) error {
 			Y: ppk.GetY().String(),
 		}
 	}
-	err := config.WriteYamlFile(dkgResult, getFilePath(id))
+	err := config.WriteYamlFile(dkgResult, refreshInputPath(id))
 	if err != nil {
 		log.Error("Cannot write YAML file", "err", err)
 		return err
@@ -89,8 +81,12 @@ func writeDKGResult(id string, result *dkg.Result) error {
 	return nil
 }
 
-func writeDKGRefreshResult(id string, refreshInput *dkg.Result, result *refresh.Result) error {
-	refreshResult := &DKGResult{
+func writeDKGRefreshResult(id string, c *DKGConfig, refreshInput *dkg.Result, result *refresh.Result) error {
+	refreshResult := &re.RefreshResult{
+		Port: c.Port,
+		Rank: c.Rank,
+		Threshold: c.Threshold,
+		Peers: c.Peers,
 		Share: result.RefreshShare.String(),
 		Pubkey: config.Pubkey{
 			X: refreshInput.PublicKey.GetX().String(),
@@ -98,19 +94,15 @@ func writeDKGRefreshResult(id string, refreshInput *dkg.Result, result *refresh.
 		},
 		BKs: make(map[string]config.BK),
 		PartialPubKey: make(map[string]config.PartialPubKey),
-		// output.yaml 작성을 위해서 paillierKey.pubkey 만 공개함
+		// for testing! private key p, q to make paillierkey
 		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
 		PaillierKey: config.PaillierKey{
-			N: result.RefreshPaillierKey.GetN().String(),
-			G: result.RefreshPaillierKey.GetG().String(),
-		},
-		Ped: make(map[string]config.Ped),
-		AllY: make(map[string]config.AllY),
-		// for testing! private key p, q to make paillierkey
-		Private: config.Private{
 			P: result.Ped.GetP().String(),
 			Q: result.Ped.GetQ().String(),
 		},
+		Ped: make(map[string]config.Ped),
+		AllY: make(map[string]config.AllY),
+
 		YSecret: result.YSecret.String(),	
 		SSid: refreshInput.SSid,
 	}
@@ -139,7 +131,7 @@ func writeDKGRefreshResult(id string, refreshInput *dkg.Result, result *refresh.
 			Y: y.GetY().String(),
 		}
 	}
-	err := config.WriteYamlFile(refreshResult, getFilePath(id))
+	err := config.WriteYamlFile(refreshResult, refreshOutputPath(id))
 	if err != nil {
 		log.Error("Cannot write YAML file", "err", err)
 		return err
@@ -147,6 +139,11 @@ func writeDKGRefreshResult(id string, refreshInput *dkg.Result, result *refresh.
 	return nil
 }
 
-func getFilePath(id string) string {
-	return fmt.Sprintf("dkg/%s-output.yaml", id)
+func refreshInputPath(id string) string {
+	return fmt.Sprintf("refresh/%s-input.yaml", id)
+}
+
+// for DKGRefresh output
+func refreshOutputPath(id string) string {
+	return fmt.Sprintf("refresh/%s-output.yaml", id)
 }

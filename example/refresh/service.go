@@ -40,7 +40,7 @@ func NewService(config *RefreshConfig, pm types.PeerManager) (*service, error) {
 	}
 
 	// Refresh needs results from DKG.
-	dkgResult, err := utils.ConvertDKGResult(config.Pubkey, config.Share, config.BKs, config.PartialPubkey)
+	dkgResult, err := utils.ConvertDKGResult(config.Pubkey, config.Share, config.BKs, config.PartialPubKey)
 	if err != nil {
 		log.Warn("Cannot get DKG result", "err", err)
 		return nil, err
@@ -98,7 +98,7 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		log.Info("Refresh done", "old", oldState.String(), "new", newState.String())
 		result, err := p.refresh.GetResult()
 		if err == nil {
-			writeRefreshResult(p.pm.SelfID(), result)
+			writeRefreshResult(p.pm.SelfID(), p.config, result)
 		} else {
 			log.Warn("Failed to get result from refresh", "err", err)
 		}

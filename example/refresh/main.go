@@ -22,7 +22,7 @@ import (
 	"github.com/spf13/viper"
 )
 
-const refreshProtocol = "/refresh/1.0.0"
+const refreshProtocol = "/refresh/1.1.0"
 
 var configFile string
 

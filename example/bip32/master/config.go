@@ -51,7 +51,6 @@ type DKGResult struct {
 	PaillierKey config.PaillierKey `yaml:"paillierKey"`
 	Ped map[string]config.Ped   `yaml:"ped"`
 	AllY map[string]config.AllY `yaml:"ally"`
-	Private config.Private      `yaml:"private"`
 	YSecret string 				`yaml:"ysecret"`
 	SSid    []byte               `yaml:"ssid"`
 }

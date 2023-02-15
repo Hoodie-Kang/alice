@@ -15,7 +15,8 @@ package signSix
 
 import (
 	"io/ioutil"
-	
+	"encoding/hex"
+
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/signSix"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/alice/types"
@@ -40,13 +41,14 @@ func NewService(config *SignSixConfig, pm types.PeerManager) (*service, error) {
 	}
 
 	// Inputs from DKG & Refresh Results
-	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.AllY, config.Private, config.Ped, config.BKs, config.YSecret)
+	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.AllY, config.PaillierKey, config.Ped, config.BKs, config.YSecret)
 	if err != nil {
 		log.Warn("Cannot get SignInput", "err", err)
 		return nil, err
 	}
+	msg, _ := hex.DecodeString(config.Message)
 	// Create signSix
-	signSix, err := signSix.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.YSecret, signInput.PublicKey, signInput.PartialPubKey, signInput.Y, signInput.Bks, signInput.PaillierKey, signInput.PedParameter, []byte(config.Message), pm, s)
+	signSix, err := signSix.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.YSecret, signInput.PublicKey, signInput.PartialPubKey, signInput.Y, signInput.Bks, signInput.PaillierKey, signInput.PedParameter, msg, pm, s)
 	if err != nil {
 		log.Warn("Cannot create a new signSix", "err", err)
 		return nil, err

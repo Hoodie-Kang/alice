@@ -14,6 +14,8 @@
 package signSix
 
 import (
+	"fmt"
+
 	"github.com/getamis/alice/example/peer"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/sirius/log"
@@ -26,10 +28,12 @@ const signSixProtocol = "/signSix/1.0.0"
 
 var configFile string
 
+var message string
+
 var Cmd = &cobra.Command{
 	Use:   "signSix",
 	Short: "SignSix process",
-	Long:  `Signing(6 Round) for using the secret shares to generate a signature.`,
+	Long:  `Signing(6 Round) to generate a Ethereum signature.`,
 	RunE: func(cmd *cobra.Command, args []string) error {
 		err := initService(cmd)
 		if err != nil {
@@ -41,6 +45,14 @@ var Cmd = &cobra.Command{
 			log.Crit("Failed to read config file", "configFile", configFile, "err", err)
 		}
 
+		_, er := fmt.Scan(&message)
+		if er != nil {
+			log.Crit("Failed to read message", err)
+		} else {
+			fmt.Println("Message:", message)
+		}
+		c.Message = message
+		
 		// Make a host that listens on the given multiaddress.
 		host, err := peer.MakeBasicHost(c.Port)
 		if err != nil {

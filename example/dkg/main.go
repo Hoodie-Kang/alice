@@ -72,8 +72,10 @@ var Cmd = &cobra.Command{
 		service.Process()
 
 		// For refresh //
-		dkgResult, _ := service.dkg.GetResult()
-		_ = host.Close()
+		dkgResult, err := service.dkg.GetResult()
+		if err != nil {
+			log.Warn("Failed to get result from DKG", "err", err)
+		}
 		host, err = peer.MakeBasicHost(config.Port)
 		if err != nil {
 			log.Crit("Failed to create a basic host", "err", err)
@@ -85,8 +87,7 @@ var Cmd = &cobra.Command{
 			log.Crit("Failed to add peers", "err", err)
 		}
 		// Create a new service.
-		// wait until other peer get ready
-		refreshService, err := NewRefreshService(dkgResult, pm2)
+		refreshService, err := NewRefreshService(config, dkgResult, pm2)
 		if err != nil {
 			log.Crit("Failed to new service", "err", err)
 		}

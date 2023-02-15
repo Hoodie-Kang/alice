@@ -24,25 +24,24 @@ import (
 )
 
 type SignConfig struct {
-	Port    int64                `yaml:"port"`
-	Share   string               `yaml:"share"`
-	Pubkey  config.Pubkey        `yaml:"pubkey"`
+	Port    int64                                 `yaml:"port"`
+	Share   string                                `yaml:"share"`
+	Pubkey  config.Pubkey                         `yaml:"pubkey"`
 	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	BKs     map[string]config.BK `yaml:"bks"`
-	Message string               `yaml:"msg"`
-	Peers   []int64              `yaml:"peers"`
-	Threshold uint32			 `yaml:"threshold"`
-	SSid 	[]byte				 `yaml:"ssid"`
-	AllY    map[string]config.AllY `yaml:"ally"`
-	Ped     map[string]config.Ped  `yaml:"ped"`
-	Private config.Private       `yaml:"private"`
-	PaillierKey config.PaillierKey `yaml:"paillierkey"`
+	BKs     map[string]config.BK                  `yaml:"bks"`
+	Peers   []int64                               `yaml:"peers"`
+	Threshold uint32			                  `yaml:"threshold"`
+	SSid 	[]byte				                  `yaml:"ssid"`
+	AllY    map[string]config.AllY                `yaml:"ally"`
+	Ped     map[string]config.Ped                 `yaml:"ped"`
+	PaillierKey config.PaillierKey                `yaml:"paillierKey"`
+	Message string               
 }
 
 type SignResult struct {
 	R string `yaml:"r"`
 	S string `yaml:"s"`
-	V uint `yaml:"v"`
+	V uint   `yaml:"v"`
 }
 
 func readSignConfigFile(filaPath string) (*SignConfig, error) {

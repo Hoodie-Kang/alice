@@ -39,6 +39,7 @@ func NewService(config *DKGConfig, pm types.PeerManager) (*service, error) {
 		done:   make(chan struct{}),
 	}
 
+	// fix me! sid changes every time?
 	sid := make([]byte, 1)
 	d, err := dkg.NewDKG(utils.GetCurve(), pm, sid, config.Threshold, config.Rank, s)
 	if err != nil {
@@ -91,7 +92,7 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		log.Info("Dkg done", "old", oldState.String(), "new", newState.String())
 		result, err := p.dkg.GetResult()
 		if err == nil {
-			writeDKGResult(p.pm.SelfID(), result)
+			writeDKGResult(p.pm.SelfID(), p.config, result)
 		} else {
 			log.Warn("Failed to get result from DKG", "err", err)
 		}

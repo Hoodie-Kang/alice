@@ -13,6 +13,7 @@ import (
 )
 
 type refresh_service struct {
+	config       *DKGConfig
 	refreshInput *dkg.Result
 	pm     types.PeerManager
 
@@ -20,13 +21,15 @@ type refresh_service struct {
 	done    chan struct{}
 }
 
-func NewRefreshService(refreshInput *dkg.Result, pm types.PeerManager) (*refresh_service, error) {
+func NewRefreshService(config *DKGConfig, refreshInput *dkg.Result, pm types.PeerManager) (*refresh_service, error) {
 	s := &refresh_service{
+		config: config,
 		refreshInput: refreshInput,
 		pm:     pm,
 		done:   make(chan struct{}),
 	}
-	// Create refresh - threshold 2 로 고정해서 진행 -> 차후 *dkg.Result 에 threshold도 넣는 걸로 수정해야함
+	// Create refresh
+	// fix me! threshold 2 로 고정해서 진행 -> 차후 *dkg.Result 에 threshold도 넣는 걸로 수정해야함
 	refresh, err := refresh.NewRefresh(refreshInput.Share, refreshInput.PublicKey, pm, 2, refreshInput.PartialPubKey, refreshInput.Bks, 2048, refreshInput.SSid, s)
 	if err != nil {
 		log.Warn("Cannot create a new refresh", "err", err)
@@ -77,8 +80,7 @@ func (p *refresh_service) OnStateChanged(oldState types.MainState, newState type
 		log.Info("Refresh done", "old", oldState.String(), "new", newState.String())
 		result, err := p.refresh.GetResult()
 		if err == nil {
-			//p.refreshInput
-			writeDKGRefreshResult(p.pm.SelfID(), p.refreshInput, result)
+			writeDKGRefreshResult(p.pm.SelfID(), p.config, p.refreshInput, result)
 		} else {
 			log.Warn("Failed to get result from refresh", "err", err)
 		}
