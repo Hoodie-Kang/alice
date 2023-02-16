@@ -37,6 +37,9 @@ type ChildConfig struct {
 }
 
 type ChildResult struct {
+	Role       string               `yaml:"role"`
+	Port       int64                `yaml:"port"`
+	Peer       []int64              `yaml:"peer"`
 	Share      string           	`yaml:"share"`
 	Translate  string           	`yaml:"translate"`
 	Pubkey     config.Pubkey    	`yaml:"pubkey"`
@@ -61,6 +64,9 @@ func readChildConfigFile(filaPath string) (*ChildConfig, error) {
 
 func writeChildResult(con *ChildConfig, result *child.Result) error {
 	childResult := &ChildResult{
+		Role: con.Role,
+		Port: con.Port,
+		Peer: con.Peer,
 		Share: result.Share.String(),
 		Translate: result.Translate.String(),
 		Pubkey: config.Pubkey{

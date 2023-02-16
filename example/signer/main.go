@@ -14,6 +14,8 @@
 package signer
 
 import (
+	"fmt"
+
 	"github.com/getamis/alice/example/peer"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/sirius/log"
@@ -25,6 +27,7 @@ import (
 const signerProtocol = "/signer/1.0.0"
 
 var configFile string
+var message string
 
 var Cmd = &cobra.Command{
 	Use:   "signer",
@@ -40,6 +43,14 @@ var Cmd = &cobra.Command{
 		if err != nil {
 			log.Crit("Failed to read config file", "configFile", configFile, "err", err)
 		}
+
+		_, er := fmt.Scan(&message)
+		if er != nil {
+			log.Crit("Failed to read message", err)
+		} else {
+			fmt.Println("Message:", message)
+		}
+		c.Message = message
 
 		// Make a host that listens on the given multiaddress.
 		host, err := peer.MakeBasicHost(c.Port)

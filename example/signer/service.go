@@ -15,6 +15,7 @@ package signer
 
 import (
 	"io/ioutil"
+	"encoding/hex"
 
 	"github.com/getamis/alice/crypto/homo/paillier"
 	"github.com/getamis/alice/crypto/tss/ecdsa/gg18/signer"
@@ -52,8 +53,9 @@ func NewService(config *SignerConfig, pm types.PeerManager) (*service, error) {
 		return nil, err
 	}
 
+	msg, _ := hex.DecodeString(config.Message)
 	// Create signer
-	signer, err := signer.NewSigner(pm, dkgResult.PublicKey, paillier, dkgResult.Share, dkgResult.Bks, []byte(config.Message), s)
+	signer, err := signer.NewSigner(pm, dkgResult.PublicKey, paillier, dkgResult.Share, dkgResult.Bks, msg, s)
 	if err != nil {
 		log.Warn("Cannot create a new signer", "err", err)
 		return nil, err

@@ -59,10 +59,17 @@ func readSignConfigFile(filaPath string) (*SignConfig, error) {
 }
 
 func writeSignResult(id string, result *sign.Result) error {
+	V := result.V
+	R := result.R
+	S := result.S
+	fmt.Println("V:", V)
+	fmt.Println("R:", R)
+	fmt.Println("S:", S)
+	
 	signResult := &SignResult{
-		R: result.R.String(),
-		S: result.S.String(),
-		V: result.V,
+		R: R.String(),
+		S: S.String(),
+		V: V,
 	}
 	err := config.WriteYamlFile(signResult, getFilePath(id))
 	if err != nil {

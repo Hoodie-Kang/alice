@@ -28,8 +28,8 @@ type SignerConfig struct {
 	Share   string               `yaml:"share"`
 	Pubkey  config.Pubkey        `yaml:"pubkey"`
 	BKs     map[string]config.BK `yaml:"bks"`
-	Message string               `yaml:"msg"`
 	Peers   []int64              `yaml:"peer"`
+	Message string
 }
 
 type SignerResult struct {

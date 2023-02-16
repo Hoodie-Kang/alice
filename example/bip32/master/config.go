@@ -33,9 +33,9 @@ type MasterConfig struct {
 }
 
 type MasterResult struct {
-	Role     string   `yaml:"role"`
-	Port     int64    `yaml:"port"`
-	Peer     []int64  `yaml:"peer"`
+	Role     string             `yaml:"role"`
+	Port     int64              `yaml:"port"`
+	Peer     []int64            `yaml:"peer"`
 	Pubkey config.Pubkey        `yaml:"pubkey"`
 	Share  string               `yaml:"share"`
 	BKs    map[string]config.BK `yaml:"bks"`	
@@ -44,15 +44,15 @@ type MasterResult struct {
 }
 
 type DKGResult struct {
-	Share  string               `yaml:"share"`
-	Pubkey config.Pubkey        `yaml:"pubkey"`
-	BKs    map[string]config.BK `yaml:"bks"`
+	Share  string                                 `yaml:"share"`
+	Pubkey config.Pubkey                          `yaml:"pubkey"`
+	BKs    map[string]config.BK                   `yaml:"bks"`
 	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	PaillierKey config.PaillierKey `yaml:"paillierKey"`
-	Ped map[string]config.Ped   `yaml:"ped"`
-	AllY map[string]config.AllY `yaml:"ally"`
-	YSecret string 				`yaml:"ysecret"`
-	SSid    []byte               `yaml:"ssid"`
+	PaillierKey config.PaillierKey                `yaml:"paillierKey"`
+	Ped map[string]config.Ped                     `yaml:"ped"`
+	AllY map[string]config.AllY                   `yaml:"ally"`
+	YSecret string 				                  `yaml:"ysecret"`
+	SSid    []byte                                `yaml:"ssid"`
 }
 
 func readMasterConfigFile(filaPath string) (*MasterConfig, error) {
