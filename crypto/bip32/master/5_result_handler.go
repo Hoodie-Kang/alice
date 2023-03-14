@@ -16,17 +16,15 @@ package master
 
 import (
 	"math/big"
-	"fmt"
 
-	"github.com/getamis/alice/crypto/utils"
 	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
+	"github.com/getamis/alice/crypto/utils"
 	"github.com/getamis/alice/crypto/zkproof"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 )
 
 type resultData struct {
-	ridi    []byte
 	shareG *pt.ECPoint
 }
 
@@ -35,6 +33,7 @@ type resultHandler struct {
 
 	share  *big.Int
 	shareG *pt.ECPoint
+	rid    []byte
 }
 
 func newResultHandler(oh *decommitmentHandler) *resultHandler {
@@ -75,9 +74,6 @@ func (s *resultHandler) HandleMessage(logger log.Logger, message types.Message) 
 		logger.Warn("Failed to add", "err", err)
 		return err
 	}
-	fmt.Println(p)
-	fmt.Println(peer.randomSeedG)
-	fmt.Println(peer.randomChooseG)
 	err = body.GetResult().VerifyByPoints(curve, []*pt.ECPoint{
 		p,
 		peer.aG,
@@ -86,24 +82,16 @@ func (s *resultHandler) HandleMessage(logger log.Logger, message types.Message) 
 		logger.Warn("Failed to verify", "err", err)
 		return err
 	}
+	s.rid = utils.Xor(s.ridi, peer.ridi)
 	s.share = new(big.Int).Add(s.poly.Evaluate(s.bk.GetX()), new(big.Int).SetBytes(body.GetResult().Evaluation))
 	s.share = s.share.Mul(s.share, big2Inver)
 	s.share = s.share.Mod(s.share, secp256k1N)
-	shareGMsg, err := zkproof.NewBaseSchorrMessage(curve, s.share)
+	shareGMsg, err := zkproof.NewBaseSchorrMessage(curve, s.share, s.rid)
 	if err != nil {
 		logger.Warn("Failed to get share G message", "err", err)
 		return err
 	}
 	s.shareG, _ = shareGMsg.V.ToPoint()
-
-	ridi, err := utils.GenRandomBytes(32)
-	if err != nil {
-		return err
-	}
-	peer.result = &resultData{
-		ridi: ridi,
-	}
-
 	s.peerManager.MustSend(id, &Message{
 		Type: Type_Verify,
 		Id:   s.selfId,
