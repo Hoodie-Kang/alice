@@ -18,6 +18,7 @@ import (
 	"errors"
 	"math/big"
 
+	// "github.com/getamis/alice/crypto/tss/ecdsa/cggmp"
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	ecpointgrouplaw "github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/utils"
@@ -43,9 +44,11 @@ var (
 type Result struct {
 	PublicKey *ecpointgrouplaw.ECPoint
 	Share     *big.Int
+	PartialPubKey map[string]*ecpointgrouplaw.ECPoint
 	Bks       map[string]*birkhoffinterpolation.BkParameter
 	Seed      []byte
 	ChainCode []byte
+	SSid      []byte
 }
 
 type Master struct {
@@ -126,12 +129,17 @@ func (m *Master) GetResult() (*Result, error) {
 	}
 	bks := make(map[string]*birkhoffinterpolation.BkParameter, m.ih.peerNum+1)
 	bks[m.ih.selfId] = m.ih.bk
+	partialPubKey := make(map[string]*ecpointgrouplaw.ECPoint)
+	partialPubKey[m.ih.peerManager.SelfID()] = rh.shareG
 	for id, peer := range m.ih.peers {
 		bks[id] = peer.bk
+		partialPubKey[id] = peer.result.shareG
 	}
+	// ssid := cggmp.ComputeSSID(m.ih.sid, []byte(m.ih.peerManager.SelfID()), rh.rid)
 	return &Result{
 		PublicKey: rh.publicKey,
 		Share:     rh.share,
+		PartialPubKey: partialPubKey,
 		Bks:       bks,
 		ChainCode: rh.chiancode,
 		Seed:      rh.seed,

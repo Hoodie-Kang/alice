@@ -71,6 +71,10 @@ func (s *verifyHandler) HandleMessage(logger log.Logger, message types.Message) 
 		s.shareG,
 		shareG,
 	}, Threshold, s.publicKey)
+	// to make partialpubkey for CGGMP Sign
+	peer.result = &resultData{
+		shareG: shareG,
+	}
 	if err != nil {
 		logger.Warn("Failed to validate coefficients", "err", err)
 		return err

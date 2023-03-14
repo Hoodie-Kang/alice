@@ -16,12 +16,19 @@ package master
 
 import (
 	"math/big"
+	"fmt"
 
+	"github.com/getamis/alice/crypto/utils"
 	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/zkproof"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 )
+
+type resultData struct {
+	ridi    []byte
+	shareG *pt.ECPoint
+}
 
 type resultHandler struct {
 	*decommitmentHandler
@@ -68,6 +75,9 @@ func (s *resultHandler) HandleMessage(logger log.Logger, message types.Message) 
 		logger.Warn("Failed to add", "err", err)
 		return err
 	}
+	fmt.Println(p)
+	fmt.Println(peer.randomSeedG)
+	fmt.Println(peer.randomChooseG)
 	err = body.GetResult().VerifyByPoints(curve, []*pt.ECPoint{
 		p,
 		peer.aG,
@@ -85,6 +95,15 @@ func (s *resultHandler) HandleMessage(logger log.Logger, message types.Message) 
 		return err
 	}
 	s.shareG, _ = shareGMsg.V.ToPoint()
+
+	ridi, err := utils.GenRandomBytes(32)
+	if err != nil {
+		return err
+	}
+	peer.result = &resultData{
+		ridi: ridi,
+	}
+
 	s.peerManager.MustSend(id, &Message{
 		Type: Type_Verify,
 		Id:   s.selfId,

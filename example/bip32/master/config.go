@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//   http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -18,8 +18,6 @@ import (
 	"io/ioutil"
 
 	"github.com/getamis/alice/crypto/bip32/master"
-	// "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
-	// "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
 	"gopkg.in/yaml.v2"
@@ -39,6 +37,7 @@ type MasterResult struct {
 	Pubkey config.Pubkey        `yaml:"pubkey"`
 	Share  string               `yaml:"share"`
 	BKs    map[string]config.BK `yaml:"bks"`	
+	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
 	Seed      []byte			`yaml:"seed"`
 	ChainCode []byte			`yaml:"chain-code"`
 }
@@ -80,6 +79,7 @@ func writeMasterResult(con *MasterConfig, result *master.Result) error {
 			Y: result.PublicKey.GetY().String(),
 		},
 		BKs: make(map[string]config.BK),
+		PartialPubKey: make(map[string]config.PartialPubKey),
 		Seed: result.Seed,
 		ChainCode: result.ChainCode,
 	}
@@ -87,6 +87,12 @@ func writeMasterResult(con *MasterConfig, result *master.Result) error {
 		masterResult.BKs[peerID] = config.BK{
 			X:    bk.GetX().String(),
 			Rank: bk.GetRank(),
+		}
+	}
+	for peerID, ppk := range result.PartialPubKey {
+		masterResult.PartialPubKey[peerID] = config.PartialPubKey{
+			X: ppk.GetX().String(),
+			Y: ppk.GetY().String(),
 		}
 	}
 	err := config.WriteYamlFile(masterResult, getFilePath(con.Role, con.Port))

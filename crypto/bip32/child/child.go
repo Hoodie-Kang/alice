@@ -111,7 +111,7 @@ func (m *Child) GetResult() (*Result, error) {
 	}
 	bks := make(map[string]*birkhoffinterpolation.BkParameter, 2)
 	bks[m.ih.selfId] = rh.childShare.bks[0]
-	for id, _ := range m.ih.peers {
+	for id := range m.ih.peers {
 		bks[id] = rh.childShare.bks[1]
 	}
 	return &Result{

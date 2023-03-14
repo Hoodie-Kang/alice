@@ -22,7 +22,7 @@ import (
 
 type peer struct {
 	*message.Peer
-
+	result        *resultData
 	bk *birkhoffinterpolation.BkParameter
 
 	aG            *pt.ECPoint
