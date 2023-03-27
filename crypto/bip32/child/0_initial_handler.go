@@ -25,6 +25,7 @@ import (
 	"github.com/getamis/alice/crypto/elliptic"
 	"github.com/getamis/alice/crypto/homo/paillier"
 	"github.com/getamis/alice/crypto/ot"
+	"github.com/getamis/alice/crypto/utils"
 	"github.com/getamis/alice/crypto/zkproof"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
@@ -34,6 +35,7 @@ import (
 
 const (
 	PaillierLength = 2048
+	LenRidi        = 32
 )
 
 type parseResultFunc func(initialBody *BodyInitial, ownResult [][]byte) [][]byte
@@ -45,6 +47,7 @@ type initial struct {
 	peers       map[string]*peer
 	selfId      string
 
+	ridi            []byte
 	sm              *shareManager
 	sid             []byte
 	childIndex      uint32
@@ -159,6 +162,11 @@ func newChildKeyFunc(startIndex int, garbleStart int, garbleEnd int, parseResult
 		for _, id := range peerManager.PeerIDs() {
 			peers[id] = newPeer(id)
 		}
+		ridi, err := utils.GenRandomBytes(LenRidi)
+		if err != nil {
+			return nil, err
+		}
+
 		return &initial{
 			peerManager:     peerManager,
 			peerNum:         peerNum,
@@ -167,6 +175,7 @@ func newChildKeyFunc(startIndex int, garbleStart int, garbleEnd int, parseResult
 			parseResultFunc: parseResultFunc,
 			hashFunc:        hashFunc,
 
+			ridi:        ridi,
 			sm:          sm,
 			sid:         sid,
 			childIndex:  childIndex,
@@ -187,6 +196,7 @@ func newChildKeyFunc(startIndex int, garbleStart int, garbleEnd int, parseResult
 						PubKey:         homoKey.ToPubKeyBytes(),
 						PubKeyN:        homoKey.GetN().Bytes(),
 						ShareGProofMsg: shareGProof,
+						Ridi:           ridi,
 					},
 				},
 			},
@@ -256,6 +266,8 @@ func (s *initial) HandleMessage(logger log.Logger, message types.Message) error 
 		logger.Warn("Inconsistent public key", "got", got, "expected", s.sm.publicKey)
 		return ErrVerifyFailure
 	}
+	// Set for CGGMP
+	peer.ridi = body.GetRidi()
 	s.peerManager.MustSend(id, &Message{
 		Type: Type_OtReceiver,
 		Id:   s.selfId,

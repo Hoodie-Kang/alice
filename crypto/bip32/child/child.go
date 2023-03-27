@@ -18,6 +18,7 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp"
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	ecpointgrouplaw "github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/types"
@@ -43,8 +44,11 @@ type Result struct {
 	Translate *big.Int
 	PublicKey *ecpointgrouplaw.ECPoint       
 	BKs       map[string]*birkhoffinterpolation.BkParameter
+	PartialPubKey map[string]*ecpointgrouplaw.ECPoint
 	ChainCode []byte
 	Depth     byte
+	Rid       []byte
+	SSid      []byte
 }
 
 type Child struct {
@@ -111,16 +115,23 @@ func (m *Child) GetResult() (*Result, error) {
 	}
 	bks := make(map[string]*birkhoffinterpolation.BkParameter, 2)
 	bks[m.ih.selfId] = rh.childShare.bks[0]
+	partialPubKey := make(map[string]*ecpointgrouplaw.ECPoint)
+	partialPubKey[m.ih.selfId] = rh.childShare.childShareG
 	for id := range m.ih.peers {
 		bks[id] = rh.childShare.bks[1]
+		partialPubKey[id] = rh.childShare.otherPartialShareG
 	}
+	ssid := cggmp.ComputeSSID(rh.sid, []byte(m.ih.selfId), rh.rid)
 	return &Result{
 		// Share to use for signing
 		Share:     rh.childShare.share,
 		Translate: rh.childShare.translate,
 		PublicKey: rh.childShare.publicKey,
 		BKs:       bks,
+		PartialPubKey: partialPubKey,
 		ChainCode: rh.childShare.chainCode,
 		Depth:     rh.childShare.depth,
+		Rid:       rh.rid,
+		SSid:      ssid,
 	}, nil
 }

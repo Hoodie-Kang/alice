@@ -17,6 +17,7 @@ import (
 	"fmt"
 	"io/ioutil"
 
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/crypto/bip32/master"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
@@ -27,31 +28,26 @@ type MasterConfig struct {
 	Role     string   `yaml:"role"`
 	Port     int64    `yaml:"port"`
 	Rank     uint32   `yaml:"rank"`
-	Peer     []int64  `yaml:"peer"`
+	Peers    []int64  `yaml:"peers"`
 }
 
 type MasterResult struct {
-	Role     string             `yaml:"role"`
-	Port     int64              `yaml:"port"`
-	Peer     []int64            `yaml:"peer"`
-	Pubkey config.Pubkey        `yaml:"pubkey"`
-	Share  string               `yaml:"share"`
-	BKs    map[string]config.BK `yaml:"bks"`	
+	Role      string            				  `yaml:"role"`
+	Port      int64              				  `yaml:"port"`
+	Rank      uint32                              `yaml:"rank"`
+	Threshold uint32                              `yaml:"threshold"`
+	Peers     []int64            				  `yaml:"peers"`
+	Share     string               				  `yaml:"share"`
+	Pubkey    config.Pubkey       				  `yaml:"pubkey"`
+	BKs       map[string]config.BK 				  `yaml:"bks"`	
 	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	Seed      []byte			`yaml:"seed"`
-	ChainCode []byte			`yaml:"chain-code"`
-}
-
-type DKGResult struct {
-	Share  string                                 `yaml:"share"`
-	Pubkey config.Pubkey                          `yaml:"pubkey"`
-	BKs    map[string]config.BK                   `yaml:"bks"`
-	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	PaillierKey config.PaillierKey                `yaml:"paillierKey"`
 	Ped map[string]config.Ped                     `yaml:"ped"`
 	AllY map[string]config.AllY                   `yaml:"ally"`
+	PaillierKey config.PaillierKey                `yaml:"paillierKey"`
 	YSecret string 				                  `yaml:"ysecret"`
-	SSid    []byte                                `yaml:"ssid"`
+	SSid      []byte 							  `yaml:"ssid"`
+	Seed      []byte							  `yaml:"seed"`
+	ChainCode []byte							  `yaml:"chain-code"`
 }
 
 func readMasterConfigFile(filaPath string) (*MasterConfig, error) {
@@ -68,31 +64,57 @@ func readMasterConfigFile(filaPath string) (*MasterConfig, error) {
 	return c, nil
 }
 
-func writeMasterResult(con *MasterConfig, result *master.Result) error {
+func writeMasterResult(con *MasterConfig, refreshInput *master.Result, result *refresh.Result) error {
 	masterResult := &MasterResult{
 		Role: con.Role,
 		Port: con.Port,
-		Peer: con.Peer,
-		Share: result.Share.String(),
+		Rank: con.Rank,
+		Threshold: 2,
+		Peers: con.Peers,
+		Share: result.RefreshShare.String(),
 		Pubkey: config.Pubkey{
-			X: result.PublicKey.GetX().String(),
-			Y: result.PublicKey.GetY().String(),
+			X: refreshInput.PublicKey.GetX().String(),
+			Y: refreshInput.PublicKey.GetY().String(),
 		},
 		BKs: make(map[string]config.BK),
 		PartialPubKey: make(map[string]config.PartialPubKey),
-		Seed: result.Seed,
-		ChainCode: result.ChainCode,
+		// for testing! private key p, q to make paillierkey
+		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
+		PaillierKey: config.PaillierKey{
+			P: result.Ped.GetP().String(),
+			Q: result.Ped.GetQ().String(),
+		},
+		Ped: make(map[string]config.Ped),
+		AllY: make(map[string]config.AllY),
+
+		YSecret: result.YSecret.String(),	
+		SSid: refreshInput.SSid,
+		Seed: refreshInput.Seed,
+		ChainCode: refreshInput.ChainCode,
 	}
-	for peerID, bk := range result.Bks {
+	for peerID, bk := range refreshInput.Bks {
 		masterResult.BKs[peerID] = config.BK{
 			X:    bk.GetX().String(),
 			Rank: bk.GetRank(),
 		}
 	}
-	for peerID, ppk := range result.PartialPubKey {
+	for peerID, ppk := range result.RefreshPartialPubKey {
 		masterResult.PartialPubKey[peerID] = config.PartialPubKey{
 			X: ppk.GetX().String(),
 			Y: ppk.GetY().String(),
+		}
+	}
+	for peerID, ped := range result.PedParameter {
+		masterResult.Ped[peerID] = config.Ped{
+			N: ped.Getn().String(),
+			S: ped.Gets().String(),
+			T: ped.Gett().String(),
+		}
+	}
+	for peerID, y := range result.Y {
+		masterResult.AllY[peerID] = config.AllY{
+			X: y.GetX().String(),
+			Y: y.GetY().String(),
 		}
 	}
 	err := config.WriteYamlFile(masterResult, getFilePath(con.Role, con.Port))

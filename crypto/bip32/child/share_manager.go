@@ -63,13 +63,14 @@ type shareManager struct {
 	// 32 bytes
 	chainCode []byte
 	depth     byte
-
 	bks birkhoffinterpolation.BkParameters
 }
 
 type childShare struct {
 	*shareManager
-	translate *big.Int
+	translate           *big.Int
+	childShareG         *ecpointgrouplaw.ECPoint
+	otherPartialShareG  *ecpointgrouplaw.ECPoint
 }
 
 func NewShareManager(share *big.Int, pubKey *ecpointgrouplaw.ECPoint, chainCode []byte, depth byte, bks map[string]*birkhoffinterpolation.BkParameter, selfId string) (*shareManager, error) {
@@ -143,9 +144,16 @@ func (sHolder *shareManager) ComputeHardenedChildShare(childIndex uint32, second
 	}
 
 	cs := new(big.Int).Add(sHolder.share, halfTranslate)
+	// Set otherPartial Pubkey
+	otherPartialKey, err := childPubKey.Add(ecpointgrouplaw.ScalarBaseMult(childPubKey.GetCurve(), cs).Neg())
+	if err != nil {
+		return nil, err
+	}
+	otherPartialKey = otherPartialKey.ScalarMult(new(big.Int).ModInverse(cos[1], curveN))
 	// Set bk coefficients
 	cs = new(big.Int).Mul(cs, new(big.Int).ModInverse(cos[0], curveN))
 	cs = cs.Mod(cs, curveN)
+	childShareG := ecpointgrouplaw.ScalarBaseMult(curve, cs)
 	return &childShare{
 		translate: translate,
 		shareManager: &shareManager{
@@ -155,6 +163,8 @@ func (sHolder *shareManager) ComputeHardenedChildShare(childIndex uint32, second
 			publicKey: childPubKey,
 			bks:       sHolder.bks,
 		},
+		childShareG: childShareG,
+		otherPartialShareG: otherPartialKey,
 	}, nil
 }
 

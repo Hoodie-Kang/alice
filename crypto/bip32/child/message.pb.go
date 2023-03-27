@@ -241,6 +241,7 @@ type BodyInitial struct {
 	PubKey         []byte                        `protobuf:"bytes,4,opt,name=pubKey,proto3" json:"pubKey,omitempty"`
 	PubKeyN        []byte                        `protobuf:"bytes,5,opt,name=pubKeyN,proto3" json:"pubKeyN,omitempty"`
 	ShareGProofMsg *zkproof.SchnorrProofMessage  `protobuf:"bytes,6,opt,name=shareGProofMsg,proto3" json:"shareGProofMsg,omitempty"`
+    Ridi           []byte                        `protobuf:"bytes,7,opt,name=ridi,proto3" json:"ridi,omitempty"`
 }
 
 func (x *BodyInitial) Reset() {
@@ -313,6 +314,13 @@ func (x *BodyInitial) GetPubKeyN() []byte {
 func (x *BodyInitial) GetShareGProofMsg() *zkproof.SchnorrProofMessage {
 	if x != nil {
 		return x.ShareGProofMsg
+	}
+	return nil
+}
+
+func (x *BodyInitial) GetRidi() []byte {
+	if x != nil {
+		return x.Ridi
 	}
 	return nil
 }

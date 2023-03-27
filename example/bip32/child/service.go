@@ -46,7 +46,11 @@ func NewService(config *ChildConfig, pm types.PeerManager) (*service, error) {
 		return nil, err
 	}
 	// fix me! childIndex ? clarify the meaning and the usage
-	childIndex := uint32(2147483648)
+	// _ childIndex 값에 따라서 pubkey, share 등이 결정되는 듯.
+	// 2147583650 으로 여러번 시행해도 같은 결과가 나옴.
+	// childIndex로 child 를 복구하는 것이 가능할지도?
+	// CGGMP에선 refresh 거쳐야해서 복구가 쉽지 않음?
+	childIndex := uint32(2147483650)
 	// fix me! sid need to be different?
 	sid := []byte("childsid")
 	if config.Role == "Alice" {
@@ -110,10 +114,8 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		return
 	} else if newState == types.StateDone {
 		log.Info("New Child done", "old", oldState.String(), "new", newState.String())
-		result, err := p.child.GetResult()
-		if err == nil {
-			writeChildResult(p.config, result)
-		} else {
+		_, err := p.child.GetResult()
+		if err != nil {
 			log.Warn("Failed to get result from Child", "err", err)
 		}
 		close(p.done)

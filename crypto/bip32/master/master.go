@@ -18,6 +18,7 @@ import (
 	"errors"
 	"math/big"
 
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp"
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	ecpointgrouplaw "github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/utils"
@@ -135,7 +136,7 @@ func (m *Master) GetResult() (*Result, error) {
 		bks[id] = peer.bk
 		partialPubKey[id] = peer.result.shareG
 	}
-	// ssid := cggmp.ComputeSSID(m.ih.sid, []byte(m.ih.peerManager.SelfID()), rh.rid)
+	ssid := cggmp.ComputeSSID(rh.sid, []byte(m.ih.peerManager.SelfID()), rh.rid)
 	return &Result{
 		PublicKey: rh.publicKey,
 		Share:     rh.share,
@@ -144,5 +145,6 @@ func (m *Master) GetResult() (*Result, error) {
 		ChainCode: rh.chiancode,
 		Seed:      rh.seed,
 		Rid:       rh.rid,
+		SSid:      ssid,
 	}, nil
 }

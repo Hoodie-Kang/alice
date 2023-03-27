@@ -18,6 +18,7 @@ import (
 	"io/ioutil"
 
 	"github.com/getamis/alice/crypto/bip32/child"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
 	"gopkg.in/yaml.v2"
@@ -26,7 +27,7 @@ import (
 type ChildConfig struct {
 	Role       string               `yaml:"role"`
 	Port       int64                `yaml:"port"`
-	Peer       []int64              `yaml:"peer"`
+	Peers      []int64              `yaml:"peers"`
 	Pubkey     config.Pubkey        `yaml:"pubkey"`
 	Share      string               `yaml:"share"`
 	BKs        map[string]config.BK `yaml:"bks"`	
@@ -37,15 +38,24 @@ type ChildConfig struct {
 }
 
 type ChildResult struct {
-	Role       string               `yaml:"role"`
-	Port       int64                `yaml:"port"`
-	Peer       []int64              `yaml:"peer"`
-	Share      string           	`yaml:"share"`
-	Translate  string           	`yaml:"translate"`
-	Pubkey     config.Pubkey    	`yaml:"pubkey"`
-	BKs        map[string]config.BK `yaml:"bks"`
-	ChainCode  []byte				`yaml:"chain-code"`
-	Depth      byte			    	`yaml:"depth"`
+	Role       string               			  `yaml:"role"`
+	Port       int64             			      `yaml:"port"`
+	Rank       uint32                             `yaml:"rank"`
+	Threshold  uint32                             `yaml:"threshold"`
+	Peers      []int64              			  `yaml:"peers"`
+	Share      string              			      `yaml:"share"`
+	// Translate  string           				  `yaml:"translate"`
+	Pubkey        config.Pubkey    				  `yaml:"pubkey"`
+	BKs           map[string]config.BK            `yaml:"bks"`
+	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
+	Ped           map[string]config.Ped           `yaml:"ped"`
+	AllY          map[string]config.AllY          `yaml:"ally"`
+	PaillierKey   config.PaillierKey              `yaml:"paillierKey"`
+	YSecret       string 				          `yaml:"ysecret"`
+	SSid          []byte 			         	  `yaml:"ssid"`
+	Seed          []byte                          `yaml:"seed"`
+	ChainCode     []byte						  `yaml:"chain-code"`
+	Depth         byte			 		          `yaml:"depth"`
 }
 
 func readChildConfigFile(filaPath string) (*ChildConfig, error) {
@@ -62,25 +72,95 @@ func readChildConfigFile(filaPath string) (*ChildConfig, error) {
 	return c, nil
 }
 
-func writeChildResult(con *ChildConfig, result *child.Result) error {
+// func writeChildResult(con *ChildConfig, result *child.Result) error {
+// 	childResult := &ChildResult{
+// 		Role:  con.Role,
+// 		Port:  con.Port,
+// 		Threshold: 2,
+// 		Peers: con.Peers,
+// 		Share: result.Share.String(),
+// 		Translate: result.Translate.String(),
+// 		Pubkey: config.Pubkey{
+// 			X: result.PublicKey.GetX().String(),
+// 			Y: result.PublicKey.GetY().String(),
+// 		},
+// 		BKs: make(map[string]config.BK),
+// 		PartialPubKey: make(map[string]config.PartialPubKey),
+// 		SSid: result.SSid,
+// 		ChainCode: result.ChainCode,
+// 		Depth: result.Depth,
+// 	}
+// 	for peerID, bk := range result.BKs {
+// 		childResult.BKs[peerID] = config.BK{
+// 			X:    bk.GetX().String(),
+// 			Rank: bk.GetRank(),
+// 		}
+// 	}
+// 	for peerID, ppk := range result.PartialPubKey {
+// 		childResult.PartialPubKey[peerID] = config.PartialPubKey{
+// 			X: ppk.GetX().String(),
+// 			Y: ppk.GetY().String(),
+// 		}
+// 	}
+// 	err := config.WriteYamlFile(childResult, getFilePath(con.Role, con.Port))
+// 	if err != nil {
+// 		log.Error("Cannot write YAML file", "err", err)
+// 		return err
+// 	}
+// 	return nil
+// }
+
+func writeChildResult(con *ChildConfig, refreshInput *child.Result, result *refresh.Result) error {
 	childResult := &ChildResult{
 		Role: con.Role,
 		Port: con.Port,
-		Peer: con.Peer,
-		Share: result.Share.String(),
-		Translate: result.Translate.String(),
+		Rank: 0,
+		Threshold: 2,
+		Peers: con.Peers,
+		Share: result.RefreshShare.String(),
 		Pubkey: config.Pubkey{
-			X: result.PublicKey.GetX().String(),
-			Y: result.PublicKey.GetY().String(),
+			X: refreshInput.PublicKey.GetX().String(),
+			Y: refreshInput.PublicKey.GetY().String(),
 		},
 		BKs: make(map[string]config.BK),
-		ChainCode: result.ChainCode,
-		Depth: result.Depth,
+		PartialPubKey: make(map[string]config.PartialPubKey),
+		// for testing! private key p, q to make paillierkey
+		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
+		PaillierKey: config.PaillierKey{
+			P: result.Ped.GetP().String(),
+			Q: result.Ped.GetQ().String(),
+		},
+		Ped: make(map[string]config.Ped),
+		AllY: make(map[string]config.AllY),
+
+		YSecret: result.YSecret.String(),	
+		SSid: refreshInput.SSid,
+		Seed: con.Seed,
+		ChainCode: refreshInput.ChainCode,
 	}
-	for peerID, bk := range result.BKs {
+	for peerID, bk := range refreshInput.BKs {
 		childResult.BKs[peerID] = config.BK{
 			X:    bk.GetX().String(),
 			Rank: bk.GetRank(),
+		}
+	}
+	for peerID, ppk := range result.RefreshPartialPubKey {
+		childResult.PartialPubKey[peerID] = config.PartialPubKey{
+			X: ppk.GetX().String(),
+			Y: ppk.GetY().String(),
+		}
+	}
+	for peerID, ped := range result.PedParameter {
+		childResult.Ped[peerID] = config.Ped{
+			N: ped.Getn().String(),
+			S: ped.Gets().String(),
+			T: ped.Gett().String(),
+		}
+	}
+	for peerID, y := range result.Y {
+		childResult.AllY[peerID] = config.AllY{
+			X: y.GetX().String(),
+			Y: y.GetY().String(),
 		}
 	}
 	err := config.WriteYamlFile(childResult, getFilePath(con.Role, con.Port))

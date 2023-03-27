@@ -100,9 +100,9 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		return
 	} else if newState == types.StateDone {
 		log.Info("New Master done", "old", oldState.String(), "new", newState.String())
-		result, err := p.master.GetResult()
+		_, err := p.master.GetResult()
 		if err == nil {
-			writeMasterResult(p.config, result)
+			// writeMasterResult(p.config, result)
 		} else {
 			log.Warn("Failed to get result from Master", "err", err)
 		}

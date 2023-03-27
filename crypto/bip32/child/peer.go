@@ -28,6 +28,7 @@ type peer struct {
 	pubkey        homo.Pubkey
 	pubkeyN       *big.Int
 	otExtReceiver *ot.OtExtReceiver
+	ridi          []byte
 }
 
 func newPeer(id string) *peer {

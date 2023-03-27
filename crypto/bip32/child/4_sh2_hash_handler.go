@@ -17,6 +17,7 @@ package child
 import (
 	"crypto/subtle"
 
+	"github.com/getamis/alice/crypto/utils"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"golang.org/x/crypto/blake2b"
@@ -26,6 +27,7 @@ type sh2Hash struct {
 	*encH
 
 	childShare *childShare
+	rid         []byte
 }
 
 func newSh2Hash(oh *encH) *sh2Hash {
@@ -76,6 +78,7 @@ func (s *sh2Hash) HandleMessage(logger log.Logger, message types.Message) error 
 		logger.Warn("Failed to compute child share", "err", err)
 		return ErrVerifyFailure
 	}
+	s.rid = utils.Xor(s.ridi, peer.ridi)
 	return peer.AddMessage(msg)
 }
 

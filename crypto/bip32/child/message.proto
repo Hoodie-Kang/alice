@@ -49,6 +49,7 @@ message BodyInitial {
     bytes pubKey = 4;
     bytes pubKeyN = 5;
     zkproof.SchnorrProofMessage shareGProofMsg = 6;
+    bytes ridi = 7;
 }
 
 message BodyOtReceiver {
