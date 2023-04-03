@@ -25,6 +25,7 @@ import (
 	"github.com/getamis/alice/example/bip32/child"
 	"github.com/getamis/alice/example/signer"
 	"github.com/spf13/cobra"
+	"github.com/gopherjs/gopherjs/js"
 )
 
 var cmd = &cobra.Command{
@@ -45,7 +46,12 @@ func init() {
 	cmd.AddCommand(signer.Cmd)
 }
 
+func add(a int, b int) int {
+	return a + b
+}
+
 func main() {
+	js.Module.Get("exports").Set("add", add)
 	if err := cmd.Execute(); err != nil {
 		fmt.Println(err)
 		os.Exit(-1)
