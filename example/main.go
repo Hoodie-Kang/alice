@@ -14,46 +14,42 @@
 package main
 
 import (
+	"C"
 	"fmt"
-	"os"
 
-	"github.com/getamis/alice/example/dkg"
+	// "github.com/getamis/alice/example/dkg"
 	"github.com/getamis/alice/example/refresh"
 	"github.com/getamis/alice/example/sign"
 	"github.com/getamis/alice/example/signSix"
 	"github.com/getamis/alice/example/bip32/master"
 	"github.com/getamis/alice/example/bip32/child"
-	"github.com/getamis/alice/example/signer"
-	"github.com/spf13/cobra"
-	"github.com/gopherjs/gopherjs/js"
 )
 
-var cmd = &cobra.Command{
-	Use:   "tss-example",
-	Short: "TSS example",
-	Long:  `This is a tss-cggmp example`,
-}
+//export Tss
+func Tss(fun *C.char, argv *C.char, msg *C.char) {
+	protocol := C.GoString(fun)
+	path := C.GoString(argv)
 
-func init() {
-	cmd.AddCommand(dkg.Cmd)
-	cmd.AddCommand(refresh.Cmd)
-	cmd.AddCommand(sign.Cmd)
-	cmd.AddCommand(signSix.Cmd)
-	// to support 2 party bip32
-	cmd.AddCommand(master.Cmd)
-	cmd.AddCommand(child.Cmd)
-	// testing GG18 signer for bip32
-	cmd.AddCommand(signer.Cmd)
-}
-
-func add(a int, b int) int {
-	return a + b
-}
-
-func main() {
-	js.Module.Get("exports").Set("add", add)
-	if err := cmd.Execute(); err != nil {
-		fmt.Println(err)
-		os.Exit(-1)
+	switch protocol {
+	case "dkg":
+		// dkg.Dkg(path)
+	case "refresh":
+		refresh.Refresh(path)
+	case "sign":
+		message := C.GoString(msg)
+		sign.Sign(path, message)
+	case "signSix":
+		message := C.GoString(msg)
+		signSix.SignSix(path, message)
+	case "bip32master":
+		master.Bip32Master(path)
+	case "bip32child":
+		child.Bip32Child(path)
+	default:
+		fmt.Println("Retry: protocol match error")
 	}
 }
+
+// func main() {
+// 	fmt.Println("sadf")
+// }

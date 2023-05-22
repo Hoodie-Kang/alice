@@ -21,7 +21,7 @@ import (
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 )
 
 type service struct {
@@ -98,7 +98,7 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		log.Info("Refresh done", "old", oldState.String(), "new", newState.String())
 		result, err := p.refresh.GetResult()
 		if err == nil {
-			writeRefreshResult(p.pm.SelfID(), p.config, result)
+			WriteRefreshResult(p.pm.SelfID(), p.config, result)
 		} else {
 			log.Warn("Failed to get result from refresh", "err", err)
 		}

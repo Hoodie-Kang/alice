@@ -50,7 +50,7 @@ type MasterResult struct {
 	ChainCode []byte							  `yaml:"chain-code"`
 }
 
-func readMasterConfigFile(filaPath string) (*MasterConfig, error) {
+func ReadMasterConfigFile(filaPath string) (*MasterConfig, error) {
 	c := &MasterConfig{}
 	yamlFile, err := ioutil.ReadFile(filaPath)
 	if err != nil {
@@ -64,7 +64,7 @@ func readMasterConfigFile(filaPath string) (*MasterConfig, error) {
 	return c, nil
 }
 
-func writeMasterResult(con *MasterConfig, refreshInput *master.Result, result *refresh.Result) error {
+func WriteMasterResult(con *MasterConfig, refreshInput *master.Result, result *refresh.Result) error {
 	masterResult := &MasterResult{
 		Role: con.Role,
 		Port: con.Port,
@@ -126,5 +126,5 @@ func writeMasterResult(con *MasterConfig, refreshInput *master.Result, result *r
 }
 
 func getFilePath(role string, id int64) string {
-	return fmt.Sprintf("bip32/%s-%d-output.yaml", role, id)
+	return fmt.Sprintf("./bip32master-%s-%d-output.yaml", role, id)
 }

@@ -22,11 +22,10 @@ import (
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
 	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/helpers"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/peer"
-	"github.com/libp2p/go-libp2p-core/protocol"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -47,7 +46,7 @@ func MakeBasicHost(port int64) (host.Host, error) {
 		libp2p.Identity(priv),
 	}
 
-	basicHost, err := libp2p.New(context.Background(), opts...)
+	basicHost, err := libp2p.New(opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -121,13 +120,13 @@ func send(ctx context.Context, host host.Host, target string, data interface{}, 
 		log.Warn("Cannot write message to IO", "err", err)
 		return err
 	}
-	err = helpers.FullClose(s)
+	err = s.Close()
 	if err != nil {
 		log.Warn("Cannot close the stream", "err", err)
 		return err
 	}
 
-	log.Info("Sent message", "peer", target)
+	// log.Info("Sent message", "peer", target)
 	return nil
 }
 

@@ -21,14 +21,14 @@ import (
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 )
 
 type service struct {
 	config *ChildConfig
 	pm     types.PeerManager
 
-	child  *child.Child
+	Child  *child.Child
 	done chan struct{}
 }
 
@@ -46,27 +46,29 @@ func NewService(config *ChildConfig, pm types.PeerManager) (*service, error) {
 		return nil, err
 	}
 	// fix me! childIndex ? clarify the meaning and the usage
+	// cIf the index >= 2^31, then the derived key is hardened child key (i.e. coming from the parent private key).
+	// If the index < 2^31, then the derived key is non-hardened child key (i.e. coming from the parent public key).
 	// _ childIndex 값에 따라서 pubkey, share 등이 결정되는 듯.
 	// 2147583650 으로 여러번 시행해도 같은 결과가 나옴.
 	// childIndex로 child 를 복구하는 것이 가능할지도?
-	// CGGMP에선 refresh 거쳐야해서 복구가 쉽지 않음?
+	// CGGMP에선 refresh 거쳐야해서 복구가 쉽지 않음? -> GG18로 테스트
 	childIndex := uint32(2147483650)
 	// fix me! sid need to be different?
 	sid := []byte("childsid")
 	if config.Role == "Alice" {
-		c, err := child.NewAlice(pm, sid, masterResult.Share, masterResult.Bks, circuitPath, masterResult.ChainCode, config.Depth, childIndex, masterResult.PublicKey, s)
+		c, err := child.NewAlice(pm, sid, masterResult.Share, masterResult.Bks, childCircuitPath, masterResult.ChainCode, config.Depth, childIndex, masterResult.PublicKey, s)
 		if err != nil {
 			log.Warn("Cannot create a new child - Alice", "config", config, "err", err)
 			return nil, err
 		}
-		s.child = c
+		s.Child = c
 	} else if config.Role == "Bob" {
-		c, err := child.NewBob(pm, sid, masterResult.Share, masterResult.Bks, circuitPath, masterResult.ChainCode, config.Depth, childIndex, masterResult.PublicKey, s)
+		c, err := child.NewBob(pm, sid, masterResult.Share, masterResult.Bks, childCircuitPath, masterResult.ChainCode, config.Depth, childIndex, masterResult.PublicKey, s)
 		if err != nil {
 			log.Warn("Cannot create a new child - Bob", "config", config, "err", err)
 			return nil, err
 		}
-		s.child = c
+		s.Child = c
 	} else {
 		log.Warn("Role must be Alice or Bob", "err", nil)
 		return nil, nil
@@ -91,7 +93,7 @@ func (p *service) Handle(s network.Stream) {
 	}
 
 	log.Info("Received request", "from", s.Conn().RemotePeer())
-	err = p.child.AddMessage(data.GetId(), data)
+	err = p.Child.AddMessage(data.GetId(), data)
 	if err != nil {
 		log.Warn("Cannot add message to Child", "err", err)
 		return
@@ -100,8 +102,8 @@ func (p *service) Handle(s network.Stream) {
 
 func (p *service) Process() {
 	// 1. Start a child process.
-	p.child.Start()
-	defer p.child.Stop()
+	p.Child.Start()
+	defer p.Child.Stop()
 
 	// 2. Wait the child is done or failed
 	<-p.done
@@ -114,10 +116,6 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		return
 	} else if newState == types.StateDone {
 		log.Info("New Child done", "old", oldState.String(), "new", newState.String())
-		_, err := p.child.GetResult()
-		if err != nil {
-			log.Warn("Failed to get result from Child", "err", err)
-		}
 		close(p.done)
 		return
 	}

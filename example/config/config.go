@@ -14,45 +14,55 @@
 package config
 
 import (
-	"io/ioutil"
+	"os"
 
 	"gopkg.in/yaml.v2"
+	"encoding/json"
 )
 
 type Pubkey struct {
-	X string `yaml:"x"`
-	Y string `yaml:"y"`
+	X string `json:"x"`
+	Y string `json:"y"`
 }
 // for testing
 type PaillierKey struct {
-	P string `yaml:"p"`
-	Q string `yaml:"q"`
+	P string `json:"p"`
+	Q string `json:"q"`
 }
 
 type BK struct {
-	X    string `yaml:"x"`
-	Rank uint32 `yaml:"rank"`
+	X    string `json:"x"`
+	Rank uint32 `json:"rank"`
 }
 
 type PartialPubKey struct {
-	X string `yaml:"x"`
-	Y string `yaml:"y"`
+	X string `json:"x"`
+	Y string `json:"y"`
 }
 
 type AllY struct {
-	X string `yaml:"x"`
-	Y string `yaml:"y"`
+	X string `json:"x"`
+	Y string `json:"y"`
 }
 
 type Ped struct {
-	N string `yaml:"n"`
-	S string `yaml:"s"`
-	T string `yaml:"t"`
+	N string `json:"n"`
+	S string `json:"s"`
+	T string `json:"t"`
 }
+
 func WriteYamlFile(yamlData interface{}, filePath string) error {
 	data, err := yaml.Marshal(yamlData)
 	if err != nil {
 		return err
 	}
-	return ioutil.WriteFile(filePath, data, 0600)
+	return os.WriteFile(filePath, data, 0600)
+}
+
+func WriteJsonFile(jsonData interface{}, filePath string) error {
+	data, err := json.Marshal(jsonData)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filePath, data, 0600)
 }

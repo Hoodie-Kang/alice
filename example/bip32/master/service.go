@@ -20,14 +20,14 @@ import (
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 )
 
 type service struct {
 	config *MasterConfig
 	pm     types.PeerManager
 
-	master  *master.Master
+	Master  *master.Master
 	done chan struct{}
 }
 
@@ -45,14 +45,14 @@ func NewService(config *MasterConfig, pm types.PeerManager) (*service, error) {
 			log.Warn("Cannot create a new Alice", "config", config, "err", err)
 			return nil, err
 		}
-		s.master = m
+		s.Master = m
 	} else if config.Role == "Bob" {
 		m, err := master.NewBob(pm, sid, config.Rank, circuitPath, s)
 		if err != nil {
 			log.Warn("Cannot create a new Bob", "config", config, "err", err)
 			return nil, err
 		}
-		s.master = m
+		s.Master = m
 	} else {
 		log.Warn("Role must be Alice or Bob", "err", nil)
 		return nil, nil
@@ -77,7 +77,7 @@ func (p *service) Handle(s network.Stream) {
 	}
 
 	log.Info("Received request", "from", s.Conn().RemotePeer())
-	err = p.master.AddMessage(data.GetId(), data)
+	err = p.Master.AddMessage(data.GetId(), data)
 	if err != nil {
 		log.Warn("Cannot add message to Master", "err", err)
 		return
@@ -86,8 +86,8 @@ func (p *service) Handle(s network.Stream) {
 
 func (p *service) Process() {
 	// 1. Start a master process.
-	p.master.Start()
-	defer p.master.Stop()
+	p.Master.Start()
+	defer p.Master.Stop()
 
 	// 2. Wait the master is done or failed
 	<-p.done
@@ -100,12 +100,6 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		return
 	} else if newState == types.StateDone {
 		log.Info("New Master done", "old", oldState.String(), "new", newState.String())
-		_, err := p.master.GetResult()
-		if err == nil {
-			// writeMasterResult(p.config, result)
-		} else {
-			log.Warn("Failed to get result from Master", "err", err)
-		}
 		close(p.done)
 		return
 	}

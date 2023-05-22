@@ -9,7 +9,7 @@ import (
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 )
 
 type refresh_service struct {
@@ -80,12 +80,12 @@ func (p *refresh_service) OnStateChanged(oldState types.MainState, newState type
 		log.Info("Refresh done", "old", oldState.String(), "new", newState.String())
 		result, err := p.refresh.GetResult()
 		if err == nil {
-			writeDKGRefreshResult(p.pm.SelfID(), p.config, p.refreshInput, result)
+			writeDKGResult(p.pm.SelfID(), p.config, p.refreshInput, result)
 		} else {
 			log.Warn("Failed to get result from refresh", "err", err)
 		}
 		close(p.done)
 		return
 	}
-	log.Info("State changed", "old", oldState.String(), "new", newState.String())
+	// log.Info("State changed", "old", oldState.String(), "new", newState.String())
 }

@@ -58,7 +58,7 @@ type ChildResult struct {
 	Depth         byte			 		          `yaml:"depth"`
 }
 
-func readChildConfigFile(filaPath string) (*ChildConfig, error) {
+func ReadChildConfigFile(filaPath string) (*ChildConfig, error) {
 	c := &ChildConfig{}
 	yamlFile, err := ioutil.ReadFile(filaPath)
 	if err != nil {
@@ -72,45 +72,7 @@ func readChildConfigFile(filaPath string) (*ChildConfig, error) {
 	return c, nil
 }
 
-// func writeChildResult(con *ChildConfig, result *child.Result) error {
-// 	childResult := &ChildResult{
-// 		Role:  con.Role,
-// 		Port:  con.Port,
-// 		Threshold: 2,
-// 		Peers: con.Peers,
-// 		Share: result.Share.String(),
-// 		Translate: result.Translate.String(),
-// 		Pubkey: config.Pubkey{
-// 			X: result.PublicKey.GetX().String(),
-// 			Y: result.PublicKey.GetY().String(),
-// 		},
-// 		BKs: make(map[string]config.BK),
-// 		PartialPubKey: make(map[string]config.PartialPubKey),
-// 		SSid: result.SSid,
-// 		ChainCode: result.ChainCode,
-// 		Depth: result.Depth,
-// 	}
-// 	for peerID, bk := range result.BKs {
-// 		childResult.BKs[peerID] = config.BK{
-// 			X:    bk.GetX().String(),
-// 			Rank: bk.GetRank(),
-// 		}
-// 	}
-// 	for peerID, ppk := range result.PartialPubKey {
-// 		childResult.PartialPubKey[peerID] = config.PartialPubKey{
-// 			X: ppk.GetX().String(),
-// 			Y: ppk.GetY().String(),
-// 		}
-// 	}
-// 	err := config.WriteYamlFile(childResult, getFilePath(con.Role, con.Port))
-// 	if err != nil {
-// 		log.Error("Cannot write YAML file", "err", err)
-// 		return err
-// 	}
-// 	return nil
-// }
-
-func writeChildResult(con *ChildConfig, refreshInput *child.Result, result *refresh.Result) error {
+func WriteChildResult(con *ChildConfig, refreshInput *child.Result, result *refresh.Result) error {
 	childResult := &ChildResult{
 		Role: con.Role,
 		Port: con.Port,
@@ -172,5 +134,5 @@ func writeChildResult(con *ChildConfig, refreshInput *child.Result, result *refr
 }
 
 func getFilePath(role string, id int64) string {
-	return fmt.Sprintf("bip32/child/%s-%d-output.yaml", role, id)
+	return fmt.Sprintf("./bip32child-%s-%d-output.yaml", role, id)
 }

@@ -21,14 +21,14 @@ import (
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 )
 
 type service struct {
 	config *DKGConfig
 	pm     types.PeerManager
 
-	dkg  *dkg.DKG
+	Dkg  *dkg.DKG
 	done chan struct{}
 }
 
@@ -46,7 +46,7 @@ func NewService(config *DKGConfig, pm types.PeerManager) (*service, error) {
 		log.Warn("Cannot create a new DKG", "config", config, "err", err)
 		return nil, err
 	}
-	s.dkg = d
+	s.Dkg = d
 	return s, nil
 }
 
@@ -67,7 +67,7 @@ func (p *service) Handle(s network.Stream) {
 	}
 
 	log.Info("Received request", "from", s.Conn().RemotePeer())
-	err = p.dkg.AddMessage(data.GetId(), data)
+	err = p.Dkg.AddMessage(data.GetId(), data)
 	if err != nil {
 		log.Warn("Cannot add message to DKG", "err", err)
 		return
@@ -76,8 +76,8 @@ func (p *service) Handle(s network.Stream) {
 
 func (p *service) Process() {
 	// 1. Start a DKG process.
-	p.dkg.Start()
-	defer p.dkg.Stop()
+	p.Dkg.Start()
+	defer p.Dkg.Stop()
 
 	// 2. Wait the dkg is done or failed
 	<-p.done
@@ -90,12 +90,6 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		return
 	} else if newState == types.StateDone {
 		log.Info("Dkg done", "old", oldState.String(), "new", newState.String())
-		result, err := p.dkg.GetResult()
-		if err == nil {
-			writeDKGResult(p.pm.SelfID(), p.config, result)
-		} else {
-			log.Warn("Failed to get result from DKG", "err", err)
-		}
 		close(p.done)
 		return
 	}

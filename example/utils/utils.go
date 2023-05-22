@@ -239,6 +239,7 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 		pedparams := paillierzkproof.NewPedersenOpenParameter(n, s, t)
 		signInput.PedParameter[peerId] = pedparams
 	}
+	fmt.Println(paillierKey.GetPubKey())
 	return signInput, nil
 }
 

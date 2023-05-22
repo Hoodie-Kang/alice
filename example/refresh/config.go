@@ -36,22 +36,22 @@ type RefreshConfig struct {
 }
 
 type RefreshResult struct {
-	Port      int64                               `yaml:"port"`
-	Rank      uint32                              `yaml:"rank"`
-	Threshold uint32                              `yaml:"threshold"`
-	Peers     []int64                             `yaml:"peers"`
-	Share  string                                 `yaml:"share"`
-	Pubkey config.Pubkey                          `yaml:"pubkey"`
-	BKs    map[string]config.BK                   `yaml:"bks"`
-	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	Ped map[string]config.Ped                     `yaml:"ped"`
-	AllY map[string]config.AllY                   `yaml:"ally"`
-	PaillierKey config.PaillierKey                `yaml:"paillierKey"`
-	YSecret string 				                  `yaml:"ysecret"`
-	SSid    []byte                                `yaml:"ssid"`
+	Port      int64                               `json:"port"`
+	Rank      uint32                              `json:"rank"`
+	Threshold uint32                              `json:"threshold"`
+	Peers     []int64                             `json:"peers"`
+	Share  string                                 `json:"share"`
+	Pubkey config.Pubkey                          `json:"pubkey"`
+	BKs    map[string]config.BK                   `json:"bks"`
+	PartialPubKey map[string]config.PartialPubKey `json:"partialPubKey"`
+	Ped map[string]config.Ped					  `json:"ped"`
+	AllY map[string]config.AllY                   `json:"ally"`
+	PaillierKey config.PaillierKey                `json:"paillierKey"`
+	YSecret string 				                  `json:"ysecret"`
+	SSid    []byte                                `json:"ssid"`
 }
 
-func readRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
+func ReadRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
 	c := &RefreshConfig{}
 	yamlFile, err := ioutil.ReadFile(filaPath)
 	if err != nil {
@@ -65,7 +65,7 @@ func readRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
 	return c, nil
 }
 
-func writeRefreshResult(id string, input *RefreshConfig, result *refresh.Result) error {
+func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result) error {
 	refreshResult := &RefreshResult{
 		Port: input.Port,
 		Rank: input.Rank,
@@ -102,13 +102,13 @@ func writeRefreshResult(id string, input *RefreshConfig, result *refresh.Result)
 			Y: ppk.GetY().String(),
 		}
 	}
-	for peerID, ped := range result.PedParameter {
-		refreshResult.Ped[peerID] = config.Ped{
-			N: ped.Getn().String(),
-			S: ped.Gets().String(),
-			T: ped.Gett().String(),
-		}
-	}
+	// for peerID, ped := range result.PedParameter {
+	// 	refreshResult.Ped[peerID] = config.Ped{
+	// 		N: ped.Getn().String(),
+	// 		S: ped.Gets().String(),
+	// 		T: ped.Gett().String(),
+	// 	}
+	// }
 	for peerID, y := range result.Y {
 		refreshResult.AllY[peerID] = config.AllY{
 			X: y.GetX().String(),
@@ -124,5 +124,5 @@ func writeRefreshResult(id string, input *RefreshConfig, result *refresh.Result)
 }
 
 func getFilePath(id string) string {
-	return fmt.Sprintf("refresh/%s-output.yaml", id)
+	return fmt.Sprintf("./refresh-%s-output.yaml", id)
 }

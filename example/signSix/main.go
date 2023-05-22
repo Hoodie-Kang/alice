@@ -19,12 +19,12 @@ import (
 	"github.com/getamis/alice/example/peer"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/sirius/log"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 )
 
-const signSixProtocol = "/signSix/1.0.0"
+// const signSixProtocol = "/signSix/1.0.0"
 
 var configFile string
 
@@ -40,7 +40,7 @@ var Cmd = &cobra.Command{
 			log.Crit("Failed to init", "err", err)
 		}
 
-		c, err := readSignSixConfigFile(configFile)
+		c, err := ReadSignSixConfigFile(configFile)
 		if err != nil {
 			log.Crit("Failed to read config file", "configFile", configFile, "err", err)
 		}

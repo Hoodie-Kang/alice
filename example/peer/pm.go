@@ -17,11 +17,12 @@ import (
 	"context"
 	"sync"
 	"time"
+	"fmt"
 
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/sirius/log"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/protocol"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/protocol"
 )
 
 type peerManager struct {
@@ -94,6 +95,7 @@ func connectToPeer(host host.Host, peerAddr string, wg *sync.WaitGroup) {
 	for {
 		// Connect the host to the peer.
 		err := connect(context.Background(), host, peerAddr)
+		fmt.Println("peer", peerAddr)
 		if err != nil {
 			logger.Warn("Failed to connect to peer", "err", err)
 			time.Sleep(3 * time.Second)

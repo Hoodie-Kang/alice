@@ -22,7 +22,7 @@ import (
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 )
 
 type service struct {
@@ -99,7 +99,7 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		log.Info("Sign done", "old", oldState.String(), "new", newState.String())
 		result, err := p.sign.GetResult()
 		if err == nil {
-			writeSignResult(p.pm.SelfID(), result)
+			WriteSignResult(p.pm.SelfID(), result)
 		} else {
 			log.Warn("Failed to get result from sign", "err", err)
 		}

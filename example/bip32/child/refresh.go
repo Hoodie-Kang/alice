@@ -8,7 +8,7 @@ import (
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/network"
 )
 
 type refresh_service struct {
@@ -78,7 +78,7 @@ func (p *refresh_service) OnStateChanged(oldState types.MainState, newState type
 		log.Info("Refresh done", "old", oldState.String(), "new", newState.String())
 		result, err := p.refresh.GetResult()
 		if err == nil {
-			writeChildResult(p.config, p.refreshInput, result)
+			WriteChildResult(p.config, p.refreshInput, result)
 		} else {
 			log.Warn("Failed to get result from refresh", "err", err)
 		}

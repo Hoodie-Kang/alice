@@ -46,7 +46,7 @@ type SignResult struct {
 	V uint   `yaml:"v"`
 }
 
-func readSignSixConfigFile(filaPath string) (*SignSixConfig, error) {
+func ReadSignSixConfigFile(filaPath string) (*SignSixConfig, error) {
 	c := &SignSixConfig{}
 	yamlFile, err := ioutil.ReadFile(filaPath)
 	if err != nil {
@@ -60,7 +60,7 @@ func readSignSixConfigFile(filaPath string) (*SignSixConfig, error) {
 	return c, nil
 }
 
-func writeSignResult(id string, result *signSix.Result) error {
+func WriteSignResult(id string, result *signSix.Result) error {
 	V := result.V
 	R := result.R
 	S := result.S
@@ -82,5 +82,5 @@ func writeSignResult(id string, result *signSix.Result) error {
 }
 
 func getFilePath(id string) string {
-	return fmt.Sprintf("signSix/%s-output.yaml", id)
+	return fmt.Sprintf("./signSix-%s-output.yaml", id)
 }
