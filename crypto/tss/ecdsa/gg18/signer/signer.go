@@ -31,6 +31,7 @@ import (
 type Result struct {
 	R *big.Int
 	S *big.Int
+	V uint
 }
 
 type Signer struct {
@@ -84,6 +85,15 @@ func (s *Signer) GetResult() (*Result, error) {
 		log.Error("We cannot convert to result handler in done state")
 		return nil, tss.ErrNotReady
 	}
+	n := rh.r.GetCurve().Params().N
+	S := new(big.Int).Set(rh.s)
+	id := rh.r.GetY().Bit(0)
+	if S.Cmp(new(big.Int).Rsh(n, 1)) > 0 {
+		S = new(big.Int).Neg(S)
+		S = S.Add(n, S)
+		id = id ^ 1
+	}
+
 	// to verify is correct signature
 	isCorrectSig := ecdsa.Verify(rh.publicKey.ToPubKey(), rh.msg, rh.r.GetX(), rh.s)
 	if !isCorrectSig {
@@ -91,7 +101,8 @@ func (s *Signer) GetResult() (*Result, error) {
 	}
 
 	return &Result{
-		R: new(big.Int).Set(rh.r.GetX()),
-		S: new(big.Int).Set(rh.s),
+		R: rh.r.GetX(),
+		S: S,
+		V: id,
 	}, nil
 }
