@@ -1,6 +1,6 @@
 module github.com/getamis/alice
 
-go 1.17
+go 1.19
 
 require (
 	github.com/agl/ed25519 v0.0.0-20170116200512-5312a6153412
@@ -8,7 +8,7 @@ require (
 	github.com/decred/dcrd/dcrec/edwards v1.0.0
 	github.com/getamis/sirius v1.1.7
 	github.com/golang/protobuf v1.5.3
-	github.com/libp2p/go-libp2p v0.27.0
+	github.com/libp2p/go-libp2p v0.27.3
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1
 	github.com/multiformats/go-multiaddr v0.9.0
 	github.com/onsi/ginkgo v1.16.5
@@ -109,7 +109,7 @@ require (
 	github.com/subosito/gotenv v1.2.0 // indirect
 	go.uber.org/atomic v1.10.0 // indirect
 	go.uber.org/dig v1.16.1 // indirect
-	go.uber.org/fx v1.19.2 // indirect
+	go.uber.org/fx v1.19.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
 	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
