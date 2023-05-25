@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//   http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -28,8 +28,8 @@ type service struct {
 	config *ChildConfig
 	pm     types.PeerManager
 
-	Child  *child.Child
-	done chan struct{}
+	Child *child.Child
+	done  chan struct{}
 }
 
 func NewService(config *ChildConfig, pm types.PeerManager) (*service, error) {
@@ -72,7 +72,7 @@ func NewService(config *ChildConfig, pm types.PeerManager) (*service, error) {
 	} else {
 		log.Warn("Role must be Alice or Bob", "err", nil)
 		return nil, nil
-	}	
+	}
 	return s, nil
 }
 

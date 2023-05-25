@@ -46,13 +46,13 @@ var Cmd = &cobra.Command{
 		if err != nil {
 			log.Crit("Failed to new service", "err", err)
 		}
-		
+
 		host.SetStreamHandler(childProtocol, func(s network.Stream) {
 			service.Handle(s)
 		})
-		
+
 		pm.EnsureAllConnected()
-		service.Process()	
+		service.Process()
 		// For refresh //
 		masterResult, err := service.Child.GetResult()
 		if err != nil {

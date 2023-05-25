@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//   http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -17,8 +17,8 @@ import (
 	"fmt"
 	"os"
 
-	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/example/config"
 	re "github.com/getamis/alice/example/refresh"
 	"github.com/getamis/sirius/log"
@@ -31,18 +31,64 @@ type DKGConfig struct {
 	Peers     []int64 `json:"peers"`
 }
 
-func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result, result *refresh.Result) error {
+func writeTest(id string, c *DKGConfig, refreshInput *dkg.Result) error {
 	refreshResult := &re.RefreshResult{
-		Port: c.Port,
-		Rank: c.Rank,
+		Port:      c.Port,
+		Rank:      c.Rank,
 		Threshold: c.Threshold,
-		Peers: c.Peers,
-		Share: result.RefreshShare.String(),
+		Peers:     c.Peers,
+		Share:     refreshInput.Share.String(),
 		Pubkey: config.Pubkey{
 			X: refreshInput.PublicKey.GetX().String(),
 			Y: refreshInput.PublicKey.GetY().String(),
 		},
-		BKs: make(map[string]config.BK),
+		BKs:           make(map[string]config.BK),
+		PartialPubKey: make(map[string]config.PartialPubKey),
+		SSid:          refreshInput.SSid,
+	}
+	for peerID, bk := range refreshInput.Bks {
+		if peerID == "id-10001" {
+			peerID = "id-10003"
+		} else if peerID == "id-10002" {
+			peerID = "id-10004"
+		}
+		refreshResult.BKs[peerID] = config.BK{
+			X:    bk.GetX().String(),
+			Rank: bk.GetRank(),
+		}
+	}
+	for peerID, ppk := range refreshInput.PartialPubKey {
+		if peerID == "id-10001" {
+			peerID = "id-10003"
+		} else if peerID == "id-10002" {
+			peerID = "id-10004"
+		}
+		refreshResult.PartialPubKey[peerID] = config.PartialPubKey{
+			X: ppk.GetX().String(),
+			Y: ppk.GetY().String(),
+		}
+	}
+	// ssid: []byte -> base64 encoded string in Json file
+	err := config.WriteJsonFile(refreshResult, getFilePath(id))
+	if err != nil {
+		log.Error("Cannot write key file", "err", err)
+		return err
+	}
+	return nil
+}
+
+func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result, result *refresh.Result) error {
+	refreshResult := &re.RefreshResult{
+		Port:      c.Port,
+		Rank:      c.Rank,
+		Threshold: c.Threshold,
+		Peers:     c.Peers,
+		Share:     result.RefreshShare.String(),
+		Pubkey: config.Pubkey{
+			X: refreshInput.PublicKey.GetX().String(),
+			Y: refreshInput.PublicKey.GetY().String(),
+		},
+		BKs:           make(map[string]config.BK),
 		PartialPubKey: make(map[string]config.PartialPubKey),
 		// for testing! private key p, q to make paillierkey
 		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
@@ -50,11 +96,11 @@ func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result, result *r
 			P: result.Ped.GetP().String(),
 			Q: result.Ped.GetQ().String(),
 		},
-		Ped: make(map[string]config.Ped),
+		Ped:  make(map[string]config.Ped),
 		AllY: make(map[string]config.AllY),
 
-		YSecret: result.YSecret.String(),	
-		SSid: refreshInput.SSid,
+		YSecret: result.YSecret.String(),
+		SSid:    refreshInput.SSid,
 	}
 	for peerID, bk := range refreshInput.Bks {
 		if peerID == "id-10001" {
@@ -101,7 +147,7 @@ func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result, result *r
 			Y: y.GetY().String(),
 		}
 	}
-	// ssid: []byte -> base64 encoded string in Json file 
+	// ssid: []byte -> base64 encoded string in Json file
 	err := config.WriteJsonFile(refreshResult, getFilePath(id))
 	if err != nil {
 		log.Error("Cannot write key file", "err", err)

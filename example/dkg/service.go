@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//   http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -90,6 +90,11 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		return
 	} else if newState == types.StateDone {
 		log.Info("Dkg done", "old", oldState.String(), "new", newState.String())
+		dkgResult, err := p.Dkg.GetResult()
+		if err != nil {
+			log.Warn("Failed to get result from DKG", "err", err)
+		}
+		writeTest(p.pm.SelfID(), p.config, dkgResult)
 		close(p.done)
 		return
 	}

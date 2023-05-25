@@ -30,11 +30,11 @@ func Bip32Master(arg string) {
 	if err != nil {
 		log.Crit("Failed to new service", "err", err)
 	}
-	
+
 	host.SetStreamHandler(masterProtocol, func(s network.Stream) {
 		service.Handle(s)
 	})
-	
+
 	pm.EnsureAllConnected()
 	service.Process()
 	// For refresh //

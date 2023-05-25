@@ -34,10 +34,10 @@ func Dkg(argc *C.char, argv *C.char) {
 	peers, _ := strconv.ParseInt(C.GoString(argv), 10, 64)
 
 	config := &dkg.DKGConfig{
-		Port: port,
-		Rank: 0,
+		Port:      port,
+		Rank:      0,
 		Threshold: 2,
-		Peers: []int64{peers},
+		Peers:     []int64{peers},
 	}
 	// Make a host that listens on the given multiaddress.
 	host, err := peer.MakeBasicHost(config.Port)
@@ -61,43 +61,11 @@ func Dkg(argc *C.char, argv *C.char) {
 	host.SetStreamHandler(dkgProtocol, func(s network.Stream) {
 		service.Handle(s)
 	})
-
 	// Ensure all peers are connected before starting DKG process.
 	pm.EnsureAllConnected()
 
 	// Start DKG process.
 	service.Process()
-
-	// For refresh //
-	dkgResult, err := service.Dkg.GetResult()
-	if err != nil {
-		log.Warn("Failed to get result from DKG", "err", err)
-	}
-	host, err = peer.MakeBasicHost(config.Port)
-	if err != nil {
-		log.Crit("Failed to create a basic host", "err", err)
-	}
-	// Create a new peer manager.
-	pm2 := peer.NewPeerManager(utils.GetPeerIDFromPort(config.Port), host, dkgProtocol)
-	err = pm2.AddPeers(config.Peers)
-	if err != nil {
-		log.Crit("Failed to add peers", "err", err)
-	}
-	// Create a new service.
-	refreshService, err := dkg.NewRefreshService(config, dkgResult, pm2)
-	if err != nil {
-		log.Crit("Failed to new service", "err", err)
-	}
-	// Set a stream handler on the host.
-	host.SetStreamHandler(dkgProtocol, func(s network.Stream) {
-		refreshService.Handle(s)
-	})
-	// Ensure all peers are connected before starting DKG process.
-	pm2.EnsureAllConnected()
-
-	refreshService.Process()
 }
 
-func main() {
-	// Dkg("./go/src/alice/example/dkg/id-10001-input.yaml")
-}
+// func main() {}

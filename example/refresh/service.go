@@ -16,6 +16,7 @@ package refresh
 import (
 	"io/ioutil"
 
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/alice/types"
@@ -25,8 +26,9 @@ import (
 )
 
 type service struct {
-	config *RefreshConfig
-	pm     types.PeerManager
+	config       *RefreshConfig
+	refreshInput *dkg.Result
+	pm           types.PeerManager
 
 	refresh *refresh.Refresh
 	done    chan struct{}
@@ -52,6 +54,7 @@ func NewService(config *RefreshConfig, pm types.PeerManager) (*service, error) {
 		log.Warn("Cannot create a new refresh", "err", err)
 		return nil, err
 	}
+	s.refreshInput = dkgResult
 	s.refresh = refresh
 	return s, nil
 }

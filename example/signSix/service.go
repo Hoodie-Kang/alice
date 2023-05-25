@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//   http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -14,8 +14,8 @@
 package signSix
 
 import (
-	"io/ioutil"
 	"encoding/hex"
+	"io/ioutil"
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/signSix"
 	"github.com/getamis/alice/example/utils"
@@ -30,7 +30,7 @@ type service struct {
 	pm     types.PeerManager
 
 	signSix *signSix.Sign
-	done   chan struct{}
+	done    chan struct{}
 }
 
 func NewService(config *SignSixConfig, pm types.PeerManager) (*service, error) {

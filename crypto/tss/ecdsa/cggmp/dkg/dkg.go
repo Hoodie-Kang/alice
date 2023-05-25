@@ -113,7 +113,6 @@ func (d *DKG) GetResult() (*Result, error) {
 
 func (d *DKG) Start() {
 	d.MessageMain.Start()
-
 	// Send the first message to new peer
 	cggmp.Broadcast(d.ph.peerManager, d.ph.getPeerMessage())
 }

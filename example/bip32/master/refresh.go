@@ -3,8 +3,8 @@ package master
 import (
 	"io/ioutil"
 
-	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/crypto/bip32/master"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
 	"github.com/golang/protobuf/proto"
@@ -14,7 +14,7 @@ import (
 type refresh_service struct {
 	config       *MasterConfig
 	refreshInput *master.Result
-	pm     types.PeerManager
+	pm           types.PeerManager
 
 	refresh *refresh.Refresh
 	done    chan struct{}
@@ -22,10 +22,10 @@ type refresh_service struct {
 
 func NewRefreshService(config *MasterConfig, refreshInput *master.Result, pm types.PeerManager) (*refresh_service, error) {
 	s := &refresh_service{
-		config: config,
+		config:       config,
 		refreshInput: refreshInput,
-		pm:     pm,
-		done:   make(chan struct{}),
+		pm:           pm,
+		done:         make(chan struct{}),
 	}
 	// Create refresh
 	refresh, err := refresh.NewRefresh(refreshInput.Share, refreshInput.PublicKey, pm, 2, refreshInput.PartialPubKey, refreshInput.Bks, 2048, refreshInput.SSid, s)

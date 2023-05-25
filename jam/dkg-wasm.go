@@ -26,10 +26,10 @@ const dkgProtocol = "/dkg/1.0.0"
 //export Dkg
 func Dkg(argc int64, argv int64) {
 	config := &dkg.DKGConfig{
-		Port: argc,
-		Rank: 0,
+		Port:      argc,
+		Rank:      0,
 		Threshold: 2,
-		Peers: []int64{argv},
+		Peers:     []int64{argv},
 	}
 	// Make a host that listens on the given multiaddress.
 	host, err := peer.MakeBasicHost(config.Port)
@@ -91,5 +91,5 @@ func Dkg(argc int64, argv int64) {
 }
 
 func main() {
-	Dkg(10001, 10002)
+	Dkg(10002, 10001)
 }

@@ -4,7 +4,7 @@
 // you may not use this file except in compliance with the License.
 // You may obtain a copy of the License at
 //
-//   http://www.apache.org/licenses/LICENSE-2.0
+//	http://www.apache.org/licenses/LICENSE-2.0
 //
 // Unless required by applicable law or agreed to in writing, software
 // distributed under the License is distributed on an "AS IS" BASIS,
@@ -15,11 +15,12 @@ package main
 
 import (
 	"C"
+	"strconv"
 )
 
 import (
-	"github.com/getamis/alice/example/refresh"
 	"github.com/getamis/alice/example/peer"
+	"github.com/getamis/alice/example/refresh"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/sirius/log"
 	"github.com/libp2p/go-libp2p/core/network"
@@ -28,13 +29,19 @@ import (
 const refreshProtocol = "/refresh/1.0.0"
 
 //export Refresh
-func Refresh(argv *C.char) {
+func Refresh(argc *C.char, argv *C.char) {
 	arg := C.GoString(argv)
+	port, _ := strconv.ParseInt(C.GoString(argc), 10, 64)
 	config, err := refresh.ReadRefreshConfigFile(arg)
 	if err != nil {
 		log.Crit("Failed to read config file", "configFile", arg, "err", err)
 	}
-
+	config.Port = port
+	if config.Peers[0] == 10002 {
+		config.Peers[0] = 10004
+	} else {
+		config.Peers[0] = 10003
+	}
 	// Make a host that listens on the given multiaddress.
 	host, err := peer.MakeBasicHost(config.Port)
 	if err != nil {
@@ -66,4 +73,4 @@ func Refresh(argv *C.char) {
 
 }
 
-// func main() {}
+func main() {}
