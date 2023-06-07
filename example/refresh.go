@@ -66,8 +66,11 @@ func Refresh(argc *C.char, argv *C.char) {
 	})
 
 	// Ensure all peers are connected before starting refresh process.
-	pm.EnsureAllConnected()
-
+	err = pm.EnsureAllConnected()
+	if err != nil {
+		log.Crit("Connection Timeout", "err", err)
+		return
+	}
 	// Start refresh process.
 	service.Process()
 

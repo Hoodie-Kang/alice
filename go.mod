@@ -8,7 +8,7 @@ require (
 	github.com/decred/dcrd/dcrec/edwards v1.0.0
 	github.com/getamis/sirius v1.1.7
 	github.com/golang/protobuf v1.5.3
-	github.com/libp2p/go-libp2p v0.27.3
+	github.com/libp2p/go-libp2p v0.27.4
 	github.com/minio/blake2b-simd v0.0.0-20160723061019-3f5f724cb5b1
 	github.com/multiformats/go-multiaddr v0.9.0
 	github.com/onsi/ginkgo v1.16.5
@@ -123,10 +123,10 @@ require (
 	gopkg.in/tomb.v1 v1.0.0-20141024135613-dd632973f1e7 // indirect
 	gopkg.in/yaml.v3 v3.0.1 // indirect
 	lukechampine.com/blake3 v1.1.7 // indirect
-	nhooyr.io/websocket v1.8.7 // indirect
 )
 
 require (
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/rollbar/rollbar-go v1.2.0 // indirect
+	nhooyr.io/websocket v1.8.7 // indirect
 )

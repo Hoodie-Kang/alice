@@ -15,7 +15,6 @@ package refresh
 
 import (
 	"fmt"
-	"io/ioutil"
 	"os"
 	"encoding/json"
 
@@ -54,7 +53,7 @@ type RefreshResult struct {
 
 func ReadRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
 	c := &RefreshConfig{}
-	yamlFile, err := ioutil.ReadFile(filaPath)
+	yamlFile, err := os.ReadFile(filaPath)
 	if err != nil {
 		return nil, err
 	}

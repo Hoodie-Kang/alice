@@ -15,12 +15,12 @@ package sign
 
 import (
 	"fmt"
-	"io/ioutil"
+	"os"
+	"encoding/json"
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
-	"gopkg.in/yaml.v2"
 )
 
 type SignConfig struct {
@@ -46,11 +46,11 @@ type SignResult struct {
 
 func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 	c := &SignConfig{}
-	yamlFile, err := ioutil.ReadFile(filaPath)
+	yamlFile, err := os.ReadFile(filaPath)
 	if err != nil {
 		return nil, err
 	}
-	err = yaml.Unmarshal(yamlFile, c)
+	err = json.Unmarshal(yamlFile, c)
 	if err != nil {
 		return nil, err
 	}
@@ -71,7 +71,7 @@ func WriteSignResult(id string, result *sign.Result) error {
 		S: S.String(),
 		V: V,
 	}
-	err := config.WriteYamlFile(signResult, getFilePath(id))
+	err := config.WriteJsonFile(signResult, getFilePath(id))
 	if err != nil {
 		log.Error("Cannot write YAML file", "err", err)
 		return err

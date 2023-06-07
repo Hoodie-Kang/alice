@@ -94,7 +94,7 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		if err != nil {
 			log.Warn("Failed to get result from DKG", "err", err)
 		}
-		writeTest(p.pm.SelfID(), p.config, dkgResult)
+		writeDKGResult(p.pm.SelfID(), p.config, dkgResult)
 		close(p.done)
 		return
 	}

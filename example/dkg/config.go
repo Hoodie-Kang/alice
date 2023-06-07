@@ -18,7 +18,6 @@ import (
 	"os"
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
-	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/getamis/alice/example/config"
 	re "github.com/getamis/alice/example/refresh"
 	"github.com/getamis/sirius/log"
@@ -31,7 +30,7 @@ type DKGConfig struct {
 	Peers     []int64 `json:"peers"`
 }
 
-func writeTest(id string, c *DKGConfig, refreshInput *dkg.Result) error {
+func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result) error {
 	refreshResult := &re.RefreshResult{
 		Port:      c.Port,
 		Rank:      c.Rank,
@@ -66,85 +65,6 @@ func writeTest(id string, c *DKGConfig, refreshInput *dkg.Result) error {
 		refreshResult.PartialPubKey[peerID] = config.PartialPubKey{
 			X: ppk.GetX().String(),
 			Y: ppk.GetY().String(),
-		}
-	}
-	// ssid: []byte -> base64 encoded string in Json file
-	err := config.WriteJsonFile(refreshResult, getFilePath(id))
-	if err != nil {
-		log.Error("Cannot write key file", "err", err)
-		return err
-	}
-	return nil
-}
-
-func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result, result *refresh.Result) error {
-	refreshResult := &re.RefreshResult{
-		Port:      c.Port,
-		Rank:      c.Rank,
-		Threshold: c.Threshold,
-		Peers:     c.Peers,
-		Share:     result.RefreshShare.String(),
-		Pubkey: config.Pubkey{
-			X: refreshInput.PublicKey.GetX().String(),
-			Y: refreshInput.PublicKey.GetY().String(),
-		},
-		BKs:           make(map[string]config.BK),
-		PartialPubKey: make(map[string]config.PartialPubKey),
-		// for testing! private key p, q to make paillierkey
-		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
-		PaillierKey: config.PaillierKey{
-			P: result.Ped.GetP().String(),
-			Q: result.Ped.GetQ().String(),
-		},
-		Ped:  make(map[string]config.Ped),
-		AllY: make(map[string]config.AllY),
-
-		YSecret: result.YSecret.String(),
-		SSid:    refreshInput.SSid,
-	}
-	for peerID, bk := range refreshInput.Bks {
-		if peerID == "id-10001" {
-			peerID = "Octet"
-		} else if peerID == "id-10002" {
-			peerID = "User"
-		}
-		refreshResult.BKs[peerID] = config.BK{
-			X:    bk.GetX().String(),
-			Rank: bk.GetRank(),
-		}
-	}
-	for peerID, ppk := range result.RefreshPartialPubKey {
-		if peerID == "id-10001" {
-			peerID = "Octet"
-		} else if peerID == "id-10002" {
-			peerID = "User"
-		}
-		refreshResult.PartialPubKey[peerID] = config.PartialPubKey{
-			X: ppk.GetX().String(),
-			Y: ppk.GetY().String(),
-		}
-	}
-	for peerID, ped := range result.PedParameter {
-		if peerID == "id-10001" {
-			peerID = "Octet"
-		} else if peerID == "id-10002" {
-			peerID = "User"
-		}
-		refreshResult.Ped[peerID] = config.Ped{
-			N: ped.Getn().String(),
-			S: ped.Gets().String(),
-			T: ped.Gett().String(),
-		}
-	}
-	for peerID, y := range result.Y {
-		if peerID == "id-10001" {
-			peerID = "Octet"
-		} else if peerID == "id-10002" {
-			peerID = "User"
-		}
-		refreshResult.AllY[peerID] = config.AllY{
-			X: y.GetX().String(),
-			Y: y.GetY().String(),
 		}
 	}
 	// ssid: []byte -> base64 encoded string in Json file

@@ -59,18 +59,24 @@ func (p *peerManager) PeerIDs() []string {
 }
 
 func (p *peerManager) MustSend(peerID string, message interface{}) {
-	send(context.Background(), p.host, p.peers[peerID], message, p.protocol)
+	err := send(context.Background(), p.host, p.peers[peerID], message, p.protocol)
+	if err != nil {
+		return
+	}
 }
 
 // EnsureAllConnected connects the host to specified peer and sends the message to it.
-func (p *peerManager) EnsureAllConnected() {
+func (p *peerManager) EnsureAllConnected() error {
 	var wg sync.WaitGroup
-
+	ch := make(chan error)
 	for _, peerAddr := range p.peers {
 		wg.Add(1)
-		go connectToPeer(p.host, peerAddr, &wg)
+		go func () {
+			ch <- connectToPeer(p.host, peerAddr, &wg)
+		}()
 	}
 	wg.Wait()
+	return <-ch
 }
 
 // AddPeers adds peers to peer list.
@@ -87,19 +93,30 @@ func (p *peerManager) AddPeers(peerPorts []int64) error {
 	return nil
 }
 
-func connectToPeer(host host.Host, peerAddr string, wg *sync.WaitGroup) {
+func connectToPeer(host host.Host, peerAddr string, wg *sync.WaitGroup) error {
 	defer wg.Done()
+	ch := make(chan bool)
+
+	go func(done chan bool) {
+		time.Sleep(20 * time.Second)
+		done <- true
+	} (ch)
 
 	logger := log.New("to", peerAddr)
 	for {
 		// Connect the host to the peer.
 		err := connect(context.Background(), host, peerAddr)
 		if err != nil {
-			logger.Warn("Failed to connect to peer", "err", err)
-			time.Sleep(3 * time.Second)
-			continue
+			select {
+			case <-ch:
+				return err
+			default:
+				logger.Warn("Failed to connect to peer", "err", err)
+				time.Sleep(3 * time.Second)
+				continue
+			}
 		}
 		logger.Debug("Successfully connect to peer")
-		return
+		return nil
 	}
 }

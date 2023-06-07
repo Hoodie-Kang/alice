@@ -29,7 +29,7 @@ import (
 const dkgProtocol = "/dkg/1.0.0"
 
 //export Dkg
-func Dkg(argc *C.char, argv *C.char) {
+func Dkg(argc *C.char, argv *C.char) int {
 	port, _ := strconv.ParseInt(C.GoString(argc), 10, 64)
 	peers, _ := strconv.ParseInt(C.GoString(argv), 10, 64)
 
@@ -62,10 +62,14 @@ func Dkg(argc *C.char, argv *C.char) {
 		service.Handle(s)
 	})
 	// Ensure all peers are connected before starting DKG process.
-	pm.EnsureAllConnected()
-
+	err = pm.EnsureAllConnected()
+	if err != nil {
+		log.Crit("Connection Timeout", "err", err)
+		return -1
+	}
 	// Start DKG process.
 	service.Process()
+	return 0
 }
 
 // func main() {}

@@ -65,8 +65,11 @@ func Sign(argv *C.char, msg *C.char) {
 	})
 
 	// Ensure all peers are connected before starting sign process.
-	pm.EnsureAllConnected()
-
+	err = pm.EnsureAllConnected()
+	if err != nil {
+		log.Crit("Connection Timeout", "err", err)
+		return
+	}
 	// Start sign process.
 	service.Process()
 }
