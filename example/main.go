@@ -18,7 +18,7 @@ import (
 	"fmt"
 
 	// "github.com/getamis/alice/example/dkg"
-	"github.com/getamis/alice/example/refresh"
+	// "github.com/getamis/alice/example/refresh"
 	"github.com/getamis/alice/example/sign"
 	"github.com/getamis/alice/example/signSix"
 	"github.com/getamis/alice/example/bip32/master"
@@ -34,7 +34,7 @@ func Tss(fun *C.char, argv *C.char, msg *C.char) {
 	case "dkg":
 		// dkg.Dkg(path)
 	case "refresh":
-		refresh.Refresh(path)
+		// refresh.Refresh(path)
 	case "sign":
 		message := C.GoString(msg)
 		sign.Sign(path, message)

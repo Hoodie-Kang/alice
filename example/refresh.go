@@ -30,11 +30,11 @@ const refreshProtocol = "/refresh/1.0.0"
 
 //export Refresh
 func Refresh(argc *C.char, argv *C.char) {
-	arg := C.GoString(argv)
 	port, _ := strconv.ParseInt(C.GoString(argc), 10, 64)
-	config, err := refresh.ReadRefreshConfigFile(arg)
+	path := C.GoString(argv)
+	config, err := refresh.ReadRefreshConfigFile(path)
 	if err != nil {
-		log.Crit("Failed to read config file", "configFile", arg, "err", err)
+		log.Crit("Failed to read config file", "configFile", path, "err", err)
 	}
 	config.Port = port
 	if config.Peers[0] == 10002 {
@@ -56,7 +56,7 @@ func Refresh(argc *C.char, argv *C.char) {
 	}
 
 	// Create a new service.
-	service, err := refresh.NewService(config, pm)
+	service, err := refresh.NewService(config, pm, path)
 	if err != nil {
 		log.Crit("Failed to new service", "err", err)
 	}
@@ -76,4 +76,4 @@ func Refresh(argc *C.char, argv *C.char) {
 
 }
 
-func main() {}
+// func main() {}

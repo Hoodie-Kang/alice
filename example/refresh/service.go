@@ -29,15 +29,17 @@ type service struct {
 	config       *RefreshConfig
 	refreshInput *dkg.Result
 	pm           types.PeerManager
+	path         string
 
 	refresh *refresh.Refresh
 	done    chan struct{}
 }
 
-func NewService(config *RefreshConfig, pm types.PeerManager) (*service, error) {
+func NewService(config *RefreshConfig, pm types.PeerManager, path string) (*service, error) {
 	s := &service{
 		config: config,
 		pm:     pm,
+		path:   path,
 		done:   make(chan struct{}),
 	}
 
@@ -101,7 +103,7 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		log.Info("Refresh done", "old", oldState.String(), "new", newState.String())
 		result, err := p.refresh.GetResult()
 		if err == nil {
-			WriteRefreshResult(p.pm.SelfID(), p.config, result)
+			WriteRefreshResult(p.pm.SelfID(), p.config, result, p.path)
 		} else {
 			log.Warn("Failed to get result from refresh", "err", err)
 		}

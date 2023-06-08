@@ -14,7 +14,6 @@
 package refresh
 
 import (
-	"fmt"
 	"os"
 	"encoding/json"
 
@@ -65,7 +64,7 @@ func ReadRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
 	return c, nil
 }
 
-func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result) error {
+func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result, path string) error {
 	refreshResult := &RefreshResult{
 		Port:      input.Port,
 		Rank:      input.Rank,
@@ -136,20 +135,10 @@ func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result)
 			Y: y.GetY().String(),
 		}
 	}
-	err := config.WriteJsonFile(refreshResult, getFilePath(id))
+	err := config.WriteJsonFile(refreshResult, path)
 	if err != nil {
 		log.Error("Cannot write key file", "err", err)
 		return err
 	}
 	return nil
-}
-
-func getFilePath(id string) string {
-	path, _ := os.UserHomeDir()
-	if id == "id-10003" {
-		id = "Octet"
-	} else {
-		id = "User"
-	}
-	return fmt.Sprintf(path+"/Desktop/%s-key.json", id)
 }

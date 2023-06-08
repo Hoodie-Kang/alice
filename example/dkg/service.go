@@ -27,15 +27,19 @@ import (
 type service struct {
 	config *DKGConfig
 	pm     types.PeerManager
+	path   string
+	info   string
 
 	Dkg  *dkg.DKG
 	done chan struct{}
 }
 
-func NewService(config *DKGConfig, pm types.PeerManager) (*service, error) {
+func NewService(config *DKGConfig, pm types.PeerManager, path string, info string) (*service, error) {
 	s := &service{
 		config: config,
 		pm:     pm,
+		path:   path,
+		info:   info,
 		done:   make(chan struct{}),
 	}
 
@@ -94,7 +98,7 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		if err != nil {
 			log.Warn("Failed to get result from DKG", "err", err)
 		}
-		writeDKGResult(p.pm.SelfID(), p.config, dkgResult)
+		writeDKGResult(p.pm.SelfID(), p.config, dkgResult, p.path, p.info)
 		close(p.done)
 		return
 	}

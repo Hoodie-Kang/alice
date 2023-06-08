@@ -29,9 +29,11 @@ import (
 const dkgProtocol = "/dkg/1.0.0"
 
 //export Dkg
-func Dkg(argc *C.char, argv *C.char) int {
+func Dkg(argc *C.char, argv *C.char, arg *C.char, info *C.char) int {
 	port, _ := strconv.ParseInt(C.GoString(argc), 10, 64)
 	peers, _ := strconv.ParseInt(C.GoString(argv), 10, 64)
+	path := C.GoString(arg)
+	information := C.GoString(info)
 
 	config := &dkg.DKGConfig{
 		Port:      port,
@@ -53,7 +55,7 @@ func Dkg(argc *C.char, argv *C.char) int {
 	}
 
 	// Create a new service.
-	service, err := dkg.NewService(config, pm)
+	service, err := dkg.NewService(config, pm, path, information)
 	if err != nil {
 		log.Crit("Failed to new service", "err", err)
 	}
@@ -72,4 +74,4 @@ func Dkg(argc *C.char, argv *C.char) int {
 	return 0
 }
 
-// func main() {}
+func main() {}

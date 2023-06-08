@@ -15,7 +15,6 @@ package dkg
 
 import (
 	"fmt"
-	"os"
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/example/config"
@@ -30,7 +29,7 @@ type DKGConfig struct {
 	Peers     []int64 `json:"peers"`
 }
 
-func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result) error {
+func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result, path string, info string) error {
 	refreshResult := &re.RefreshResult{
 		Port:      c.Port,
 		Rank:      c.Rank,
@@ -68,7 +67,7 @@ func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result) error {
 		}
 	}
 	// ssid: []byte -> base64 encoded string in Json file
-	err := config.WriteJsonFile(refreshResult, getFilePath(id))
+	err := config.WriteJsonFile(refreshResult, getFilePath(id, path, info))
 	if err != nil {
 		log.Error("Cannot write key file", "err", err)
 		return err
@@ -77,12 +76,11 @@ func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result) error {
 }
 
 // for DKGRefresh output
-func getFilePath(id string) string {
-	path, _ := os.UserHomeDir()
+func getFilePath(id string, path string, info string) string {
 	if id == "id-10001" {
 		id = "Octet"
 	} else {
 		id = "User"
 	}
-	return fmt.Sprintf(path+"/Desktop/%s-key.json", id)
+	return fmt.Sprintf(path+"/%s_"+info, id)
 }
