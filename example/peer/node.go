@@ -66,6 +66,12 @@ func getPeerAddr(port int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
+	for i := 0; i < 10; i++ {
+		priv, _ := generateIdentity(int64(i))
+		pid, _ := peer.IDFromPrivateKey(priv)
+		fmt.Println(pid)
+	}
+
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", port, pid), nil
 }
 // Fix me: generateIdentity generates a fixed key pair by using "something(tss 대표지갑 인덱스)" as random source.

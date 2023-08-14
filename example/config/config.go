@@ -16,7 +16,6 @@ package config
 import (
 	"os"
 
-	"gopkg.in/yaml.v2"
 	"encoding/json"
 )
 
@@ -49,14 +48,6 @@ type Ped struct {
 	N string `json:"n"`
 	S string `json:"s"`
 	T string `json:"t"`
-}
-
-func WriteYamlFile(yamlData interface{}, filePath string) error {
-	data, err := yaml.Marshal(yamlData)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filePath, data, 0600)
 }
 
 func WriteJsonFile(jsonData interface{}, filePath string) error {

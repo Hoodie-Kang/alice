@@ -57,7 +57,6 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/koron/go-ssdp v0.0.4 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
-	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/libp2p/go-cidranger v1.1.0 // indirect
 	github.com/libp2p/go-flow-metrics v0.1.0 // indirect
@@ -126,7 +125,6 @@ require (
 )
 
 require (
-	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/rollbar/rollbar-go v1.2.0 // indirect
 	gopkg.in/natefinch/lumberjack.v2 v2.2.1

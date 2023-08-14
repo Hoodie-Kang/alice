@@ -22,8 +22,6 @@ import (
 	"github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/elliptic"
 	"github.com/getamis/alice/crypto/homo/paillier"
-	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
-	"github.com/getamis/alice/crypto/bip32/master"
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
@@ -64,70 +62,6 @@ func GetCurve() elliptic.Curve {
 	return elliptic.Secp256k1()
 }
 
-// ConvertDKGResult converts DKG result from config.
-func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK, cfgPPK map[string]config.PartialPubKey) (*dkg.Result, error) {
-	// Build public key.
-	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
-	if !ok {
-		log.Error("Cannot convert string to big int", "x", cfgPubkey.X)
-		return nil, ErrConversion
-	}
-	y, ok := new(big.Int).SetString(cfgPubkey.Y, 10)
-	if !ok {
-		log.Error("Cannot convert string to big int", "y", cfgPubkey.Y)
-		return nil, ErrConversion
-	}
-	pubkey, err := ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
-	if err != nil {
-		log.Error("Cannot get public key", "err", err)
-		return nil, err
-	}
-
-	// Build share.
-	share, ok := new(big.Int).SetString(cfgShare, 10)
-	if !ok {
-		log.Error("Cannot convert string to big int", "share", share)
-		return nil, ErrConversion
-	}
-
-	dkgResult := &dkg.Result{
-		PublicKey: pubkey,
-		Share:     share,
-		Bks:       make(map[string]*birkhoffinterpolation.BkParameter),
-		PartialPubKey: make(map[string]*ecpointgrouplaw.ECPoint),
-	}
-
-	// Build bks.
-	for peerID, bk := range cfgBKs {
-		x, ok := new(big.Int).SetString(bk.X, 10)
-		if !ok {
-			log.Error("Cannot convert string to big int", "x", bk.X)
-			return nil, ErrConversion
-		}
-		dkgResult.Bks[peerID] = birkhoffinterpolation.NewBkParameter(x, bk.Rank)
-	}
-
-	// Build PartialPubKey.
-	for peerID, ppk := range cfgPPK {
-		x, ok := new(big.Int).SetString(ppk.X, 10)
-		if !ok {
-			log.Error("Cannot convert string to big int", "x", ppk.X)
-			return nil, ErrConversion
-		}
-		y, ok := new(big.Int).SetString(ppk.Y, 10)
-		if !ok {
-			log.Error("Cannot convert string to big int", "y", ppk.Y)
-			return nil, ErrConversion
-		}
-		ppkey, err := ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
-		if err != nil {
-			log.Error("Cannot get partial public key", "err", err)
-			return nil, err
-		}
-		dkgResult.PartialPubKey[peerID] = ppkey
-	}
-	return dkgResult, nil
-}
 // ConvertSignInput converts SingInput(=DKG&Refresh result) from config.
 // paillierKey *paillier.Paillier 를 직접 받아오지 못하기 때문에, 일단 PedPara 즉, p q 값을 가져와서 paillierkey 를 만들어서 사용함.
 // -> 이 방식은 private key를 드러내는 위험한 방식이므로 테스트 후 key가 드러나지 않게 가져오는 방법으로 반드시 수정해야함.
@@ -246,96 +180,4 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 	}
 
 	return signInput, nil
-}
-
-// Convert master output config to child input values
-func ConvertMasterResult(role string, cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK, cfgSeed []byte, cfgChainCode []byte) (*master.Result, error) {
-	// Build public key.
-	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
-	if !ok {
-		log.Error("Cannot convert string to big int", "x", cfgPubkey.X)
-		return nil, ErrConversion
-	}
-	y, ok := new(big.Int).SetString(cfgPubkey.Y, 10)
-	if !ok {
-		log.Error("Cannot convert string to big int", "y", cfgPubkey.Y)
-		return nil, ErrConversion
-	}
-	pubkey, err := ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
-	if err != nil {
-		log.Error("Cannot get public key", "err", err)
-		return nil, err
-	}
-
-	// Build share.
-	share, ok := new(big.Int).SetString(cfgShare, 10)
-	if !ok {
-		log.Error("Cannot convert string to big int", "share", share)
-		return nil, ErrConversion
-	}
-	
-	masterResult := &master.Result{
-		PublicKey:     pubkey,
-		Share:         share,
-		Bks:           make(map[string]*birkhoffinterpolation.BkParameter),
-		Seed:          cfgSeed,
-		ChainCode:     cfgChainCode,
-	}
-
-	// Build bks.
-	for peerID, bk := range cfgBKs {
-		x, ok := new(big.Int).SetString(bk.X, 10)
-		if !ok {
-			log.Error("Cannot convert string to big int", "x", bk.X)
-			return nil, ErrConversion
-		}
-		masterResult.Bks[peerID] = birkhoffinterpolation.NewBkParameter(x, bk.Rank)
-	}
-
-	return masterResult, nil
-}
-
-// For GG18 sign, ConvertBip32Result converts Bip32 result from config.
-func ConvertBip32Result(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK) (*dkg.Result, error) {
-	// Build public key.
-	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
-	if !ok {
-		log.Error("Cannot convert string to big int", "x", cfgPubkey.X)
-		return nil, ErrConversion
-	}
-	y, ok := new(big.Int).SetString(cfgPubkey.Y, 10)
-	if !ok {
-		log.Error("Cannot convert string to big int", "y", cfgPubkey.Y)
-		return nil, ErrConversion
-	}
-	pubkey, err := ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
-	if err != nil {
-		log.Error("Cannot get public key", "err", err)
-		return nil, err
-	}
-
-	// Build share.
-	share, ok := new(big.Int).SetString(cfgShare, 10)
-	if !ok {
-		log.Error("Cannot convert string to big int", "share", share)
-		return nil, ErrConversion
-	}
-
-	dkgResult := &dkg.Result{
-		PublicKey: pubkey,
-		Share:     share,
-		Bks:       make(map[string]*birkhoffinterpolation.BkParameter),
-	}
-
-	// Build bks.
-	for peerID, bk := range cfgBKs {
-		x, ok := new(big.Int).SetString(bk.X, 10)
-		if !ok {
-			log.Error("Cannot convert string to big int", "x", bk.X)
-			return nil, ErrConversion
-		}
-		dkgResult.Bks[peerID] = birkhoffinterpolation.NewBkParameter(x, bk.Rank)
-	}
-
-	return dkgResult, nil
 }
