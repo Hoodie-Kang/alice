@@ -52,6 +52,8 @@ var (
 	ErrInvalidMessage = errors.New("invalid message")
 	//ErrSmallPublicKeySize is returned if the size of public key is small
 	ErrSmallPublicKeySize = errors.New("small public key")
+	//ErrSmallFactorPubKey is returned if there exist small factor of a public key
+	ErrSmallFactorPubKey = errors.New("there exist small factor of a public key")
 
 	big0 = big.NewInt(0)
 	big1 = big.NewInt(1)
@@ -152,7 +154,7 @@ func NewPaillierSafePrime(keySize int) (*Paillier, error) {
 	return NewPaillierUnSafe(keySize, true)
 }
 
-//  Warning: Only use in test.
+// Warning: Only use in test.
 func NewPaillierWithGivenPrimes(p, q *big.Int) (*Paillier, error) {
 	n := new(big.Int).Mul(p, q)
 	g := new(big.Int).Add(n, big1)
@@ -244,7 +246,17 @@ func (p *Paillier) NewPubKeyFromBytes(bs []byte) (homo.Pubkey, error) {
 	if err != nil {
 		return nil, err
 	}
-	return msg.ToPubkey()
+	// Check no small factor
+	pubKey, err := msg.ToPubkey()
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(primes); i++ {
+		if new(big.Int).Mod(pubKey.n, big.NewInt(primes[i])).Cmp(big0) == 0 {
+			return nil, ErrSmallFactorPubKey
+		}
+	}
+	return pubKey, nil
 }
 
 func (p *Paillier) GetMtaProof(curve elliptic.Curve, beta *big.Int, b *big.Int) ([]byte, error) {
@@ -413,9 +425,9 @@ func lFunction(x, n *big.Int) (*big.Int, error) {
 }
 
 /*
-	1. Check that c1, c2 is correct.
-	2. Choose (r, N)=1 with r in [1, N-1] randomly.
-	3. Compute c1*c2*r^N mod N^2.
+1. Check that c1, c2 is correct.
+2. Choose (r, N)=1 with r in [1, N-1] randomly.
+3. Compute c1*c2*r^N mod N^2.
 */
 func (pub *publicKey) Add(c1Bytes []byte, c2Bytes []byte) ([]byte, error) {
 	c1 := new(big.Int).SetBytes(c1Bytes)
@@ -443,10 +455,10 @@ func (pub *publicKey) Add(c1Bytes []byte, c2Bytes []byte) ([]byte, error) {
 }
 
 /*
-	1. Check that c is correct.
-	2. Compute scalar mod N.
-	3. Choose (r, N)=1 with r in [1, N-1] randomly.
-	4. Compute c^scalar*r^N mod N^2.
+1. Check that c is correct.
+2. Compute scalar mod N.
+3. Choose (r, N)=1 with r in [1, N-1] randomly.
+4. Compute c^scalar*r^N mod N^2.
 */
 func (pub *publicKey) MulConst(cBytes []byte, scalar *big.Int) ([]byte, error) {
 	c := new(big.Int).SetBytes(cBytes)

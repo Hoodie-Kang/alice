@@ -24,13 +24,14 @@ import (
 	"github.com/getamis/alice/crypto/elliptic"
 	"github.com/getamis/alice/crypto/polynomial"
 	"github.com/getamis/alice/crypto/tss"
-	"github.com/getamis/alice/crypto/tss/ecdsa/gg18/addshare"
+	"github.com/getamis/alice/crypto/tss/ecdsa/addshare"
 	"github.com/getamis/alice/crypto/zkproof"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/alice/types/mocks"
 	"github.com/getamis/sirius/log"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestAddShare(t *testing.T) {
@@ -47,7 +48,10 @@ var _ = Describe("AddShare", func() {
 		// new peer static information
 		newPeerRank := uint32(0)
 		listener := new(mocks.StateChangedListener)
-		listener.On("OnStateChanged", types.StateInit, types.StateDone).Once()
+		ch := make(chan struct{})
+		listener.On("OnStateChanged", types.StateInit, types.StateDone).Run(func(_ mock.Arguments) {
+			close(ch)
+		}).Once()
 
 		// old peer static information
 		oldPeerID := tss.GetTestID(1)
@@ -116,7 +120,7 @@ var _ = Describe("AddShare", func() {
 			},
 		}
 		Expect(addShare.AddMessage(oldPeerID, resultMsg)).Should(BeNil())
-		time.Sleep(1 * time.Second)
+		<-ch
 
 		// Expect that the result handler handled the message and the result is correct.
 		addShare.Stop()
@@ -128,5 +132,14 @@ var _ = Describe("AddShare", func() {
 		Expect(err).Should(BeNil())
 		Expect(r.Share).ShouldNot(BeNil())
 		Expect(r.PublicKey).Should(Equal(pubkey))
+
+		newBks := birkhoffinterpolation.BkParameters{}
+		pks := []*ecpointgrouplaw.ECPoint{}
+		for id, bk := range r.Bks {
+			newBks = append(newBks, bk)
+			pks = append(pks, r.PartialPublicKeys[id])
+		}
+
+		Expect(newBks.ValidatePublicKey(pks, threshold, pubkey)).Should(BeNil())
 	})
 })
