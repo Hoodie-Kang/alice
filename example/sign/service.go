@@ -29,7 +29,7 @@ type service struct {
 	config *SignConfig
 	pm     types.PeerManager
 
-	sign *sign.Sign
+	Sign *sign.Sign
 	done chan struct{}
 }
 
@@ -53,7 +53,7 @@ func NewService(config *SignConfig, pm types.PeerManager) (*service, error) {
 		log.Warn("Cannot create a new sign", "err", err)
 		return nil, err
 	}
-	s.sign = sign
+	s.Sign = sign
 	return s, nil
 }
 
@@ -74,7 +74,7 @@ func (p *service) Handle(s network.Stream) {
 	}
 
 	log.Info("Received request", "from", s.Conn().RemotePeer())
-	err = p.sign.AddMessage(data.GetId(), data)
+	err = p.Sign.AddMessage(data.GetId(), data)
 	if err != nil {
 		log.Warn("Cannot add message to sign", "err", err)
 		return
@@ -83,8 +83,8 @@ func (p *service) Handle(s network.Stream) {
 
 func (p *service) Process() {
 	// 1. Start a sign process.
-	p.sign.Start()
-	defer p.sign.Stop()
+	p.Sign.Start()
+	defer p.Sign.Stop()
 
 	// 2. Wait the sign is done or failed
 	<-p.done
@@ -97,7 +97,7 @@ func (p *service) OnStateChanged(oldState types.MainState, newState types.MainSt
 		return
 	} else if newState == types.StateDone {
 		log.Info("Sign done", "old", oldState.String(), "new", newState.String())
-		result, err := p.sign.GetResult()
+		result, err := p.Sign.GetResult()
 		if err == nil {
 			WriteSignResult(p.pm.SelfID(), result)
 		} else {

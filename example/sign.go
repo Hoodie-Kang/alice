@@ -18,7 +18,7 @@ import (
 )
 
 import (
-	"fmt"
+	"strconv"
 
 	"github.com/getamis/alice/example/peer"
 	"github.com/getamis/alice/example/sign"
@@ -30,16 +30,23 @@ import (
 const signProtocol = "/sign/1.0.0"
 
 //export Sign
-func Sign(argv *C.char, msg *C.char) {
+func Sign(argv *C.char, argc *C.char) *C.char {
 	arg := C.GoString(argv)
 	config, err := sign.ReadSignConfigFile(arg)
 	if err != nil {
 		log.Crit("Failed to read config file", "configFile", arg, "err", err)
 	}
 
-	message := C.GoString(msg)
-	fmt.Println("Message:", message)
-	config.Message = message
+	// message := C.GoString(msg)
+	port := C.GoString(argc)
+	config.Port, _ = strconv.ParseInt(port, 10, 64)
+	if config.Port % 2 == 1{
+		config.Peers = []int64{config.Port + 1}	
+	} else {
+		config.Peers = []int64{config.Port - 1}
+	}
+	// fmt.Println("Message:", message)
+	config.Message = "async sign"
 
 	// Make a host that listens on the given multiaddress.
 	host, err := peer.MakeBasicHost(config.Port)
@@ -68,10 +75,14 @@ func Sign(argv *C.char, msg *C.char) {
 	err = pm.EnsureAllConnected()
 	if err != nil {
 		log.Crit("Connection Timeout", "err", err)
-		return
 	}
 	// Start sign process.
 	service.Process()
+	result, err := service.Sign.GetResult()
+	if err != nil {
+		log.Crit("Sign Result error", "err", err)
+	}
+	return C.CString(result.R.String()+"#"+result.S.String()+"#"+strconv.FormatUint(uint64(result.V), 10)) // R+S+V
 }
 
-// func main() {}
+func main() {}

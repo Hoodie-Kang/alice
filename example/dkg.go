@@ -74,4 +74,4 @@ func Dkg(argc *C.char, argv *C.char, arg *C.char, info *C.char) int {
 	return 0
 }
 
-func main() {}
+// func main() {}

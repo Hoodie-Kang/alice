@@ -20,37 +20,37 @@ import (
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
 	"github.com/getamis/alice/example/config"
-	"github.com/getamis/sirius/log"
+	// "github.com/getamis/sirius/log"
 )
 
 type SignConfig struct {
-	Port    int64                                 `yaml:"port"`
-	Share   string                                `yaml:"share"`
-	Pubkey  config.Pubkey                         `yaml:"pubkey"`
-	PartialPubKey map[string]config.PartialPubKey `yaml:"partialPubKey"`
-	BKs     map[string]config.BK                  `yaml:"bks"`
-	Peers   []int64                               `yaml:"peers"`
-	Threshold uint32			                  `yaml:"threshold"`
-	SSid 	[]byte				                  `yaml:"ssid"`
-	AllY    map[string]config.AllY                `yaml:"ally"`
-	Ped     map[string]config.Ped                 `yaml:"ped"`
-	PaillierKey config.PaillierKey                `yaml:"paillierKey"`
+	Port    int64                                 `json:"port"`
+	Share   string                                `json:"share"`
+	Pubkey  config.Pubkey                         `json:"pubkey"`
+	PartialPubKey map[string]config.PartialPubKey `json:"partialPubKey"`
+	BKs     map[string]config.BK                  `json:"bks"`
+	Peers   []int64                               `json:"peers"`
+	Threshold uint32			                  `json:"threshold"`
+	SSid 	[]byte				                  `json:"ssid"`
+	AllY    map[string]config.AllY                `json:"ally"`
+	Ped     map[string]config.Ped                 `json:"ped"`
+	PaillierKey config.PaillierKey                `json:"paillierKey"`
 	Message string               
 }
 
 type SignResult struct {
-	R string `yaml:"r"`
-	S string `yaml:"s"`
-	V uint   `yaml:"v"`
+	R string `json:"r"`
+	S string `json:"s"`
+	V uint   `json:"v"`
 }
 
 func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 	c := &SignConfig{}
-	yamlFile, err := os.ReadFile(filaPath)
+	jsonFile, err := os.ReadFile(filaPath)
 	if err != nil {
 		return nil, err
 	}
-	err = json.Unmarshal(yamlFile, c)
+	err = json.Unmarshal(jsonFile, c)
 	if err != nil {
 		return nil, err
 	}
@@ -66,19 +66,20 @@ func WriteSignResult(id string, result *sign.Result) error {
 	fmt.Println("R:", R)
 	fmt.Println("S:", S)
 	
-	signResult := &SignResult{
-		R: R.String(),
-		S: S.String(),
-		V: V,
-	}
-	err := config.WriteJsonFile(signResult, getFilePath(id))
-	if err != nil {
-		log.Error("Cannot write YAML file", "err", err)
-		return err
-	}
+	// 결과 파일 작성
+	// signResult := &SignResult{
+	// 	R: R.String(),
+	// 	S: S.String(),
+	// 	V: V,
+	// }
+	// err := config.WriteJsonFile(signResult, getFilePath(id))
+	// if err != nil {
+	// 	log.Error("Cannot write JSON file", "err", err)
+	// 	return err
+	// }
 	return nil
 }
 
 func getFilePath(id string) string {
-	return fmt.Sprintf("./sign-%s-output.yaml", id)
+	return fmt.Sprintf("./sign-%s-output.json", id)
 }

@@ -30,7 +30,7 @@ import (
 )
 
 // For sign input
-// ped 사용해서 paillierkey 만드는 방식으로 결과를 만드는중 -- 수정 필요!!
+// ped 사용해서 paillierkey 만드는 방식으로 결과를 만드는중
 type SignInput struct {
 	PublicKey     *ecpointgrouplaw.ECPoint
 	Share         *big.Int
@@ -50,6 +50,11 @@ var (
 // GetPeerIDFromPort gets peer ID from port.
 func GetPeerIDFromPort(port int64) string {
 	// For convenience, we set peer ID as "id-" + port
+	if port % 2 == 1 {
+		return "Octet"	
+	} else if port % 2 == 0 {
+		return "User"
+	}
 	return fmt.Sprintf("id-%d", port)
 }
 
@@ -103,7 +108,7 @@ func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[strin
 	}
 
 	// Build PartialPubKey.
-	for peerId, ppk := range cfgPPK {
+	for peerID, ppk := range cfgPPK {
 		x, ok := new(big.Int).SetString(ppk.X, 10)
 		if !ok {
 			log.Error("Cannot convert string to big int", "x", ppk.X)
@@ -119,7 +124,7 @@ func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[strin
 			log.Error("Cannot get partial public key", "err", err)
 			return nil, err
 		}
-		dkgResult.PartialPubKey[peerId] = ppkey
+		dkgResult.PartialPubKey[peerID] = ppkey
 	}
 	return dkgResult, nil
 }
@@ -181,7 +186,7 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 	}
 
 	// Build PartialPubKey.
-	for peerId, ppk := range cfgPPK {
+	for peerID, ppk := range cfgPPK {
 		x, ok := new(big.Int).SetString(ppk.X, 10)
 		if !ok {
 			log.Error("Cannot convert string to big int", "x", ppk.X)
@@ -197,10 +202,10 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 			log.Error("Cannot get partial public key", "err", err)
 			return nil, err
 		}
-		signInput.PartialPubKey[peerId] = ppkey
+		signInput.PartialPubKey[peerID] = ppkey
 	}
 	// Build All Y.
-	for peerId, ally := range cfgAllYs {
+	for peerID, ally := range cfgAllYs {
 		x, ok := new(big.Int).SetString(ally.X, 10)
 		if !ok {
 			log.Error("Cannot convert string to big int", "x", ally.X)
@@ -216,11 +221,11 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 			log.Error("Cannot get partial public key", "err", err)
 			return nil, err
 		}
-		signInput.Y[peerId] = allY
+		signInput.Y[peerID] = allY
 	}
 
 	// Build PedParameter
-	for peerId, pedpara := range cfgPed {
+	for peerID, pedpara := range cfgPed {
 		n, ok := new(big.Int).SetString(pedpara.N, 10)
 		if !ok {
 			log.Error("Cannot convert string to big int", "n", pedpara.N)
@@ -237,9 +242,9 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 			return nil, ErrConversion
 		}
 		pedparams := paillierzkproof.NewPedersenOpenParameter(n, s, t)
-		signInput.PedParameter[peerId] = pedparams
+		signInput.PedParameter[peerID] = pedparams
 	}
-	fmt.Println(paillierKey.GetPubKey())
+
 	return signInput, nil
 }
 

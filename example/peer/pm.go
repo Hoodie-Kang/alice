@@ -98,7 +98,7 @@ func connectToPeer(host host.Host, peerAddr string, wg *sync.WaitGroup) error {
 	ch := make(chan bool)
 
 	go func(done chan bool) {
-		time.Sleep(20 * time.Second)
+		time.Sleep(60 * time.Second)
 		done <- true
 	} (ch)
 
