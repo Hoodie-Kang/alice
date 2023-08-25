@@ -204,7 +204,7 @@ func (p *round1Handler) HandleMessage(logg log.Logger, message types.Message) er
 	round1 := msg.GetRound1()
 	ownPed := p.own.para
 	peerPed := peer.para
-	n := peerPed.Getn()
+	n := peerPed.GetN()
 	peerPubkey, _ := round1.Pubkey.ToPoint()
 	if !p.pubKey.Equal(peerPubkey) {
 		logger.Error("Public key mismatch", map[string]string{"pubkey": p.pubKey.String(), "peerPubkey": peerPubkey.String()})
