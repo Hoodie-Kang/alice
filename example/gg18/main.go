@@ -18,11 +18,7 @@ import (
 	"os"
 
 	"github.com/getamis/alice/example/dkg"
-	"github.com/getamis/alice/example/refresh"
-	"github.com/getamis/alice/example/sign"
-	"github.com/getamis/alice/example/signSix"
-	"github.com/getamis/alice/example/bip32/master"
-	"github.com/getamis/alice/example/bip32/child"
+	"github.com/getamis/alice/example/reshare"
 	"github.com/getamis/alice/example/signer"
 	"github.com/spf13/cobra"
 )
@@ -30,19 +26,13 @@ import (
 var cmd = &cobra.Command{
 	Use:   "tss-example",
 	Short: "TSS example",
-	Long:  `This is a tss-cggmp example`,
+	Long:  `This is a tss example`,
 }
 
 func init() {
 	cmd.AddCommand(dkg.Cmd)
-	cmd.AddCommand(refresh.Cmd)
-	cmd.AddCommand(sign.Cmd)
-	cmd.AddCommand(signSix.Cmd)
-	// to support 2 party bip32
-	cmd.AddCommand(master.Cmd)
-	cmd.AddCommand(child.Cmd)
-	// testing GG18 signer for bip32
 	cmd.AddCommand(signer.Cmd)
+	cmd.AddCommand(reshare.Cmd)
 }
 
 func main() {
