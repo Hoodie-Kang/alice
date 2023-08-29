@@ -31,7 +31,7 @@ import (
 
 // MakeBasicHost creates a LibP2P host.
 func MakeBasicHost(port int64) (host.Host, error) {
-	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", port))
+	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
 	if err != nil {
 		return nil, err
 	}
@@ -65,10 +65,10 @@ func getPeerAddr(port int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", port, pid), nil
+	// return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", port, pid), nil
+	return fmt.Sprintf("/ip4/172.16.2.117/tcp/%d/p2p/%s", port, pid), nil
 }
-
-// generateIdentity generates a fixed key pair by using port as random source.
+// Fix me: generateIdentity generates a fixed key pair by using "something(tss 대표지갑 인덱스)" as random source.
 func generateIdentity(port int64) (crypto.PrivKey, error) {
 	// Use the port as the randomness source in this example.
 	// #nosec: G404: Use of weak random number generator (math/rand instead of crypto/rand)
