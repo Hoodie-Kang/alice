@@ -16,19 +16,24 @@ package dkg
 
 import (
 	"encoding/base64"
+	"encoding/hex"
 	"fmt"
+	"io"
 	"os"
 
 	"github.com/getamis/sirius/log"
 	"github.com/libp2p/go-libp2p-core/crypto"
+	"github.com/libp2p/go-libp2p-core/host"
 	"github.com/libp2p/go-libp2p-core/network"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
+	"google.golang.org/protobuf/proto"
 	"gopkg.in/yaml.v2"
 
-	"github.com/getamis/alice/crypto/tss/dkg"
+	"github.com/getamis/alice/crypto/ecpointgrouplaw"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
+	"github.com/getamis/alice/example/cggmp/utils"
 	"github.com/getamis/alice/example/config"
-	"github.com/getamis/alice/example/gg18/utils"
 	"github.com/getamis/alice/example/node"
 )
 
@@ -37,15 +42,21 @@ type DKGConfig struct {
 
 	Rank      uint32 `yaml:"rank"`
 	Threshold uint32 `yaml:"threshold"`
+	SessionId string `yaml:"sessionId"`
 }
 
 type DKGResult struct {
-	Share  string               `yaml:"share"`
-	Pubkey config.Pubkey        `yaml:"pubkey"`
-	BKs    map[string]config.BK `yaml:"bks"`
+	Share             string                   `yaml:"share"`
+	Pubkey            config.Pubkey            `yaml:"pubkey"`
+	BKs               map[string]config.BK     `yaml:"bks"`
+	Rid               string                   `yaml:"rid"`
+	PartialPublicKeys map[string]config.Pubkey `yaml:"partialPublicKeys"`
 }
 
-const dkgProtocol = "/dkg/1.0.0"
+const (
+	dkgProtocol      = "/dkg/1.0.0"
+	exchangeProtocol = "/exchange-partial-publickey/1.0.0"
+)
 
 var Cmd = &cobra.Command{
 	Use:  "dkg",
@@ -88,7 +99,7 @@ var Cmd = &cobra.Command{
 		l := node.NewListener()
 
 		// Create dkg
-		dkgCore, err := dkg.NewDKG(utils.GetCurve(), pm, cfg.Threshold, cfg.Rank, l)
+		dkgCore, err := dkg.NewDKG(utils.GetCurve(), pm, []byte(cfg.SessionId), cfg.Threshold, cfg.Rank, l)
 		if err != nil {
 			log.Warn("Cannot create a new DKG", "config", cfg, "err", err)
 			return err
@@ -105,11 +116,59 @@ var Cmd = &cobra.Command{
 			node.Handle(s)
 		})
 
+		var (
+			partialPublicKeys = map[string]*ecpointgrouplaw.ECPoint{}
+			done              = make(chan struct{}, 1)
+		)
+
+		host.SetStreamHandler(exchangeProtocol, func(s network.Stream) {
+			rawData, err := io.ReadAll(s)
+			if err != nil {
+				log.Warn("Cannot read message from peer", "err", err)
+				return
+			}
+			s.Close()
+
+			var msg ecpointgrouplaw.EcPointMessage
+
+			err = proto.Unmarshal(rawData, &msg)
+			if err != nil {
+				log.Warn("Cannot unmarshal proto message", "err", err)
+				return
+			}
+
+			p, err := msg.ToPoint()
+			if err != nil {
+				log.Warn("Cannot convert to EcPoint", "err", err)
+				return
+			}
+
+			peerId := s.Conn().RemotePeer()
+
+			partialPublicKeys[peerId.String()] = p
+
+			log.Debug("Received partial public key", "peer", peerId, "point", p.String())
+
+			if len(partialPublicKeys) == int(cfg.Threshold) {
+				done <- struct{}{}
+			}
+		})
+
 		// Ensure all peers are connected before starting DKG process.
 		pm.EnsureAllConnected()
 
 		// Start DKG process.
 		result, err := node.Process()
+		if err != nil {
+			return err
+		}
+
+		myPartialPublicKey := ecpointgrouplaw.ScalarBaseMult(utils.GetCurve(), result.Share)
+		partialPublicKeys[selfId] = myPartialPublicKey
+
+		log.Debug("waitForPartialPublicKeys")
+
+		err = waitForPartialPublicKeys(selfId, host, cfg, myPartialPublicKey, done)
 		if err != nil {
 			return err
 		}
@@ -120,12 +179,21 @@ var Cmd = &cobra.Command{
 				X: result.PublicKey.GetX().String(),
 				Y: result.PublicKey.GetY().String(),
 			},
-			BKs: make(map[string]config.BK),
+			BKs:               make(map[string]config.BK),
+			Rid:               hex.EncodeToString(result.Rid),
+			PartialPublicKeys: make(map[string]config.Pubkey),
 		}
-		for peerID, bk := range result.Bks {
-			dkgResult.BKs[peerID] = config.BK{
+		for peerId, bk := range result.Bks {
+			dkgResult.BKs[peerId] = config.BK{
 				X:    bk.GetX().String(),
 				Rank: bk.GetRank(),
+			}
+		}
+
+		for peerId, partialPublicKey := range partialPublicKeys {
+			dkgResult.PartialPublicKeys[peerId] = config.Pubkey{
+				X: partialPublicKey.GetX().String(),
+				Y: partialPublicKey.GetY().String(),
 			}
 		}
 
@@ -135,4 +203,29 @@ var Cmd = &cobra.Command{
 
 		return nil
 	},
+}
+
+func waitForPartialPublicKeys(selfId string, host host.Host, cfg DKGConfig, myKey *ecpointgrouplaw.ECPoint, done <-chan struct{}) error {
+	// Create a new peer manager.
+	pm := node.NewPeerManager(selfId, host, exchangeProtocol)
+
+	for _, p := range cfg.Peers {
+		pm.AddPeer(p.Id, node.GetPeerAddr(p.Port, p.Id))
+	}
+
+	pm.EnsureAllConnected()
+
+	msg, err := myKey.ToEcPointMessage()
+	if err != nil {
+		log.Warn("Cannot convert partial public key to proto.Message", "err", err)
+		return err
+	}
+
+	for _, p := range pm.PeerIDs() {
+		pm.MustSend(p, msg)
+	}
+
+	<-done
+
+	return nil
 }
