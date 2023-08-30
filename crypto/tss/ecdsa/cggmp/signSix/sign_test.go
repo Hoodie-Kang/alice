@@ -16,7 +16,6 @@ package signSix
 import (
 	"math/big"
 	"testing"
-	"time"
 
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
@@ -29,6 +28,7 @@ import (
 	"github.com/getamis/alice/types/mocks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestSign6Round(t *testing.T) {
@@ -51,20 +51,27 @@ var (
 	paillierKeyB, _ = paillier.NewPaillierWithGivenPrimes(p2, q2)
 	pedA, _         = paillierKeyA.NewPedersenParameterByPaillier()
 	pedB, _         = paillierKeyB.NewPedersenParameterByPaillier()
-	pedZKB          = paillierzkproof.NewPedersenOpenParameter(pedB.PedersenOpenParameter.Getn(), pedB.PedersenOpenParameter.Gets(), pedB.PedersenOpenParameter.Gett())
-	pedZKA          = paillierzkproof.NewPedersenOpenParameter(pedA.PedersenOpenParameter.Getn(), pedA.PedersenOpenParameter.Gets(), pedA.PedersenOpenParameter.Gett())
+	pedZKB          = paillierzkproof.NewPedersenOpenParameter(pedB.PedersenOpenParameter.GetN(), pedB.PedersenOpenParameter.GetS(), pedB.PedersenOpenParameter.GetT())
+	pedZKA          = paillierzkproof.NewPedersenOpenParameter(pedA.PedersenOpenParameter.GetN(), pedA.PedersenOpenParameter.GetS(), pedA.PedersenOpenParameter.GetT())
 )
 
 var _ = Describe("SignSix", func() {
 	It("should be ok", func() {
 		signs, _, listeners := newSigns()
+		doneChs := []chan struct{}{}
 		for _, l := range listeners {
-			l.On("OnStateChanged", types.StateInit, types.StateDone).Once()
+			ch := make(chan struct{})
+			doneChs = append(doneChs, ch)
+			l.On("OnStateChanged", types.StateInit, types.StateDone).Run(func(_ mock.Arguments) {
+				close(ch)
+			}).Once()
 		}
 		for _, d := range signs {
 			d.Start()
 		}
-		time.Sleep(2 * time.Second)
+		for _, ch := range doneChs {
+			<-ch
+		}
 		for _, l := range listeners {
 			l.AssertExpectations(GinkgoT())
 		}
@@ -94,8 +101,8 @@ var _ = Describe("SignSix", func() {
 		alpha1.Sub(alpha1, beta1)
 		alpha2 := new(big.Int).Mul(k2, gamma1)
 		alpha2.Sub(alpha2, beta2)
-		D1 := computeD(gamma1, K2, beta1, pedZKB.Getn())
-		D2 := computeD(gamma2, K1, beta2, pedZKA.Getn())
+		D1 := computeD(gamma1, K2, beta1, pedZKB.GetN())
+		D2 := computeD(gamma2, K1, beta2, pedZKA.GetN())
 		delta1 := new(big.Int).Mul(k1, gamma1)
 		delta1.Add(delta1, alpha1)
 		delta1.Add(delta1, beta2)
@@ -162,8 +169,8 @@ var _ = Describe("SignSix", func() {
 		alpha1.Sub(alpha1, beta1)
 		alpha2 := new(big.Int).Mul(k2, x1)
 		alpha2.Sub(alpha2, beta2)
-		D1 := computeD(x1, K2, beta1, pedZKB.Getn())
-		D2 := computeD(x2, K1, beta2, pedZKA.Getn())
+		D1 := computeD(x1, K2, beta1, pedZKB.GetN())
+		D2 := computeD(x2, K1, beta2, pedZKA.GetN())
 		chi1 := new(big.Int).Mul(k1, x1)
 		chi1.Add(chi1, alpha1)
 		chi1.Add(chi1, beta2)

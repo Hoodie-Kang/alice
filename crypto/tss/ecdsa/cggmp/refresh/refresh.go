@@ -20,8 +20,11 @@ import (
 
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	ecpointgrouplaw "github.com/getamis/alice/crypto/ecpointgrouplaw"
+	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
+	"github.com/getamis/alice/crypto/homo/paillier"
 	"github.com/getamis/alice/crypto/tss"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp"
+	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/alice/types/message"
 	"github.com/getamis/sirius/log"
@@ -30,6 +33,15 @@ import (
 type Refresh struct {
 	ph *round1Handler
 	types.MessageMain
+}
+
+type Result struct {
+	Share         *big.Int
+	PaillierKey   *paillier.Paillier
+	PartialPubKey map[string]*pt.ECPoint
+	Y             map[string]*pt.ECPoint
+	PedParameter  map[string]*paillierzkproof.PederssenOpenParameter
+	YSecret       *big.Int
 }
 
 func NewRefresh(oldShare *big.Int, pubKey *ecpointgrouplaw.ECPoint, peerManager types.PeerManager, threshold uint32, partialPubKey map[string]*ecpointgrouplaw.ECPoint, bks map[string]*birkhoffinterpolation.BkParameter, keySize int, ssid []byte, listener types.StateChangedListener) (*Refresh, error) {

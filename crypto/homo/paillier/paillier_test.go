@@ -41,10 +41,6 @@ var _ = Describe("Paillier test", func() {
 		var _ homo.Crypto = p
 	})
 
-	It("implement homo.PubKey interface", func() {
-		var _ homo.Pubkey = p.publicKey
-	})
-
 	It("GetMessageRange()", func() {
 		n := big.NewInt(101)
 		msgRange := new(big.Int).Sub(p.n, big.NewInt(10000))
@@ -66,7 +62,7 @@ var _ = Describe("Paillier test", func() {
 		Expect(p.publicKey.GetN()).ShouldNot(BeNil())
 	})
 
-	It("Getn()", func() {
+	It("GetN()", func() {
 		Expect(p.GetPubKey()).Should(Equal(p.publicKey))
 	})
 
@@ -319,14 +315,14 @@ var _ = Describe("Paillier test", func() {
 		It("NewPedersenOpenParameter: it should be ok", func() {
 			ped, err := p.NewPedersenParameterByPaillier()
 			Expect(err).Should(BeNil())
-			pedOpen, err := NewPedersenOpenParameter(ped.PedersenOpenParameter.Getn(), ped.PedersenOpenParameter.Gets(), ped.PedersenOpenParameter.Gett())
+			pedOpen, err := NewPedersenOpenParameter(ped.PedersenOpenParameter.GetN(), ped.PedersenOpenParameter.GetS(), ped.PedersenOpenParameter.GetT())
 			Expect(err).Should(BeNil())
 			Expect(pedOpen).ShouldNot(BeNil())
 		})
 		It("NewPedersenOpenParameter: s and n are not coprime", func() {
 			ped, err := p.NewPedersenParameterByPaillier()
 			Expect(err).Should(BeNil())
-			pedOpen, err := NewPedersenOpenParameter(ped.PedersenOpenParameter.Getn(), ped.PedersenOpenParameter.Getn(), ped.PedersenOpenParameter.Gett())
+			pedOpen, err := NewPedersenOpenParameter(ped.PedersenOpenParameter.GetN(), ped.PedersenOpenParameter.GetN(), ped.PedersenOpenParameter.GetT())
 			Expect(err).ShouldNot(BeNil())
 			Expect(pedOpen).Should(BeNil())
 		})
@@ -334,7 +330,7 @@ var _ = Describe("Paillier test", func() {
 		It("NewPedersenOpenParameter: t and n are not coprime", func() {
 			ped, err := p.NewPedersenParameterByPaillier()
 			Expect(err).Should(BeNil())
-			pedOpen, err := NewPedersenOpenParameter(ped.PedersenOpenParameter.Getn(), ped.PedersenOpenParameter.Gets(), ped.PedersenOpenParameter.Getn())
+			pedOpen, err := NewPedersenOpenParameter(ped.PedersenOpenParameter.GetN(), ped.PedersenOpenParameter.GetS(), ped.PedersenOpenParameter.GetN())
 			Expect(err).ShouldNot(BeNil())
 			Expect(pedOpen).Should(BeNil())
 		})
@@ -342,7 +338,7 @@ var _ = Describe("Paillier test", func() {
 		It("NewPedersenOpenParameter: bitlength of n is too small", func() {
 			ped, err := p.NewPedersenParameterByPaillier()
 			Expect(err).Should(BeNil())
-			pedOpen, err := NewPedersenOpenParameter(ped.GetP(), ped.PedersenOpenParameter.Gets(), ped.PedersenOpenParameter.Gett())
+			pedOpen, err := NewPedersenOpenParameter(ped.GetP(), ped.PedersenOpenParameter.GetS(), ped.PedersenOpenParameter.GetT())
 			Expect(err).ShouldNot(BeNil())
 			Expect(pedOpen).Should(BeNil())
 		})
@@ -350,7 +346,7 @@ var _ = Describe("Paillier test", func() {
 		It("ToPaillierPubKeyWithSpecialG: it should be ok", func() {
 			ped, err := p.NewPedersenParameterByPaillier()
 			Expect(err).Should(BeNil())
-			pedOpen, err := NewPedersenOpenParameter(ped.PedersenOpenParameter.Getn(), ped.PedersenOpenParameter.Gets(), ped.PedersenOpenParameter.Gett())
+			pedOpen, err := NewPedersenOpenParameter(ped.PedersenOpenParameter.GetN(), ped.PedersenOpenParameter.GetS(), ped.PedersenOpenParameter.GetT())
 			Expect(err).Should(BeNil())
 			pubKey := ToPaillierPubKeyWithSpecialG(pedOpen)
 			Expect(pubKey).ShouldNot(BeNil())

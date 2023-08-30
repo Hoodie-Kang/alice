@@ -16,7 +16,6 @@ package sign
 import (
 	"math/big"
 	"testing"
-	"time"
 
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
@@ -28,6 +27,7 @@ import (
 	"github.com/getamis/alice/types/mocks"
 	. "github.com/onsi/ginkgo"
 	. "github.com/onsi/gomega"
+	"github.com/stretchr/testify/mock"
 )
 
 func TestSign3Round(t *testing.T) {
@@ -46,13 +46,20 @@ var (
 var _ = Describe("Refresh", func() {
 	It("should be ok", func() {
 		signs, _, listeners := newSigns()
+		doneChs := []chan struct{}{}
 		for _, l := range listeners {
-			l.On("OnStateChanged", types.StateInit, types.StateDone).Once()
+			ch := make(chan struct{})
+			doneChs = append(doneChs, ch)
+			l.On("OnStateChanged", types.StateInit, types.StateDone).Run(func(_ mock.Arguments) {
+				close(ch)
+			}).Once()
 		}
 		for _, d := range signs {
 			d.Start()
 		}
-		time.Sleep(2 * time.Second)
+		for _, ch := range doneChs {
+			<-ch
+		}
 		for _, l := range listeners {
 			l.AssertExpectations(GinkgoT())
 		}
@@ -101,9 +108,6 @@ func newSigns() (map[string]*Sign, map[string]*birkhoffinterpolation.BkParameter
 	partialPubKey := make(map[string]*pt.ECPoint)
 	partialPubKey[tss.GetTestID(0)] = pt.ScalarBaseMult(curve, shares[0])
 	partialPubKey[tss.GetTestID(1)] = pt.ScalarBaseMult(curve, shares[1])
-	allY := make(map[string]*pt.ECPoint)
-	allY[tss.GetTestID(0)] = pt.ScalarBaseMult(curve, big.NewInt(100))
-	allY[tss.GetTestID(1)] = pt.ScalarBaseMult(curve, big.NewInt(200))
 	allPed := make(map[string]*paillierzkproof.PederssenOpenParameter)
 	allPed[tss.GetTestID(0)] = pedA.PedersenOpenParameter
 	allPed[tss.GetTestID(1)] = pedB.PedersenOpenParameter
@@ -115,7 +119,7 @@ func newSigns() (map[string]*Sign, map[string]*birkhoffinterpolation.BkParameter
 		peerManagers[i] = pm
 		listeners[id] = new(mocks.StateChangedListener)
 		var err error
-		signs[id], err = NewSign(threshold, ssidInfo, shares[i], publicKey, partialPubKey, allY, paillierKey[i], allPed, bks, msg, peerManagers[i], listeners[id])
+		signs[id], err = NewSign(threshold, ssidInfo, shares[i], publicKey, partialPubKey, paillierKey[i], allPed, bks, msg, peerManagers[i], listeners[id])
 		Expect(err).Should(BeNil())
 		signsMain[id] = signs[id]
 		r, err := signs[id].GetResult()

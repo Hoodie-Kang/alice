@@ -22,7 +22,6 @@ import (
 	"github.com/getamis/alice/crypto/matrix"
 	"github.com/getamis/alice/crypto/tss"
 	"github.com/getamis/alice/crypto/utils"
-	"github.com/getamis/alice/types"
 	"github.com/getamis/alice/types/mocks"
 	"github.com/getamis/sirius/log"
 	. "github.com/onsi/ginkgo"
@@ -157,33 +156,4 @@ func newTestReshares() (map[string]*Reshare, map[string]*mocks.StateChangedListe
 		birkhoffinterpolation.NewBkParameter(big.NewInt(5), uint32(1)),
 	}
 	return newReshares(curve, uint32(5), bks)
-}
-
-type stopPeerManager struct {
-	types.PeerManager
-
-	stopMessageType Type
-	isStopped       bool
-}
-
-func newStopPeerManager(stopMessageType Type, p types.PeerManager) *stopPeerManager {
-	return &stopPeerManager{
-		PeerManager:     p,
-		stopMessageType: stopMessageType,
-		isStopped:       false,
-	}
-}
-
-func (p *stopPeerManager) MustSend(id string, message interface{}) {
-	if p.isStopped {
-		return
-	}
-
-	// Stop peer manager if we try to send the next
-	msg := message.(*Message)
-	if msg.Type >= p.stopMessageType {
-		p.isStopped = true
-		return
-	}
-	p.PeerManager.MustSend(id, message)
 }

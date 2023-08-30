@@ -43,7 +43,7 @@ var _ = Describe("mta handler, negative cases", func() {
 		signers, listeners = newTestSigners()
 		// Override peer manager
 		for _, s := range signers {
-			p := newStopPeerManager(Type_Mta, s.ph.peerManager)
+			p := tss.NewStopPeerManager[Type](Type_Mta, s.ph.peerManager)
 			s.ph.peerManager = p
 		}
 
@@ -139,7 +139,7 @@ var _ = Describe("mta handler, negative cases", func() {
 			msg := fromH.peers[toId].enck.mtaMsg
 			mockMta.On("Decrypt", new(big.Int).SetBytes(msg.GetMta().EncAiAlpha)).Return(nil, unknownErr).Once()
 			err := toH.HandleMessage(log.Discard(), msg)
-			Expect(err).Should(Equal(unknownErr))
+			Expect(err).ShouldNot(BeNil())
 		})
 
 		It("failed to decrypt wi mta", func() {

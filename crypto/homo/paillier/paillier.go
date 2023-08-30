@@ -19,13 +19,13 @@ import (
 	"errors"
 	"math/big"
 
-	"github.com/getamis/alice/crypto/elliptic"
+	"google.golang.org/protobuf/proto"
 
 	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
+	"github.com/getamis/alice/crypto/elliptic"
 	"github.com/getamis/alice/crypto/homo"
 	"github.com/getamis/alice/crypto/utils"
 	"github.com/getamis/alice/crypto/zkproof"
-	"github.com/golang/protobuf/proto"
 )
 
 const (
@@ -52,6 +52,8 @@ var (
 	ErrInvalidMessage = errors.New("invalid message")
 	//ErrSmallPublicKeySize is returned if the size of public key is small
 	ErrSmallPublicKeySize = errors.New("small public key")
+	//ErrSmallFactorPubKey is returned if there exist small factor of a public key
+	ErrSmallFactorPubKey = errors.New("there exist small factor of a public key")
 
 	big0 = big.NewInt(0)
 	big1 = big.NewInt(1)
@@ -152,7 +154,6 @@ func NewPaillierSafePrime(keySize int) (*Paillier, error) {
 	return NewPaillierUnSafe(keySize, true)
 }
 
-// Warning: Only use in test.
 func NewPaillierWithGivenPrimes(p, q *big.Int) (*Paillier, error) {
 	n := new(big.Int).Mul(p, q)
 	g := new(big.Int).Add(n, big1)
@@ -244,7 +245,17 @@ func (p *Paillier) NewPubKeyFromBytes(bs []byte) (homo.Pubkey, error) {
 	if err != nil {
 		return nil, err
 	}
-	return msg.ToPubkey()
+	// Check no small factor
+	pubKey, err := msg.ToPubkey()
+	if err != nil {
+		return nil, err
+	}
+	for i := 0; i < len(primes); i++ {
+		if new(big.Int).Mod(pubKey.n, big.NewInt(primes[i])).Cmp(big0) == 0 {
+			return nil, ErrSmallFactorPubKey
+		}
+	}
+	return pubKey, nil
 }
 
 func (p *Paillier) GetMtaProof(curve elliptic.Curve, beta *big.Int, b *big.Int) ([]byte, error) {
@@ -484,4 +495,8 @@ func (p *Paillier) GetNthRoot() (*big.Int, error) {
 		return nil, err
 	}
 	return new(big.Int).ModInverse(p.n, eulerValue), nil
+}
+
+func (p *Paillier) GetPQ() (*big.Int, *big.Int) {
+	return p.privateKey.p, p.privateKey.q
 }
