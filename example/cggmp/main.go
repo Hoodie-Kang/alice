@@ -27,7 +27,7 @@ import (
 )
 
 var cmd = &cobra.Command{
-	Use:   "tss-example",
+	Use:   "tss",
 	Short: `This is a TSS example`,
 	PersistentPreRunE: func(cmd *cobra.Command, args []string) error {
 		if err := viper.BindPFlags(cmd.Flags()); err != nil {

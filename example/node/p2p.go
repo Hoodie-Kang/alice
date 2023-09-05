@@ -14,12 +14,13 @@
 package node
 
 import (
-	"context"
 	"fmt"
+	"math/rand"
 
 	"github.com/libp2p/go-libp2p"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/host"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/multiformats/go-multiaddr"
 )
 
@@ -35,7 +36,7 @@ func MakeBasicHost(port int64, priv crypto.PrivKey) (host.Host, error) {
 		libp2p.Identity(priv),
 	}
 
-	basicHost, err := libp2p.New(context.Background(), opts...)
+	basicHost, err := libp2p.New(opts...)
 	if err != nil {
 		return nil, err
 	}
@@ -45,5 +46,25 @@ func MakeBasicHost(port int64, priv crypto.PrivKey) (host.Host, error) {
 
 // getPeerAddr gets peer full address from port.
 func GetPeerAddr(port int64, peerId string) string {
+	// generateIdentity(port)
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", port, peerId)
+}
+
+// generateIdentity generates a fixed key pair by using port as random source.
+func GenerateIdentity(port int64) (crypto.PrivKey, error) {
+	// Use the port as the randomness source in this example.
+	// #nosec: G404: Use of weak random number generator (math/rand instead of crypto/rand)
+	r := rand.New(rand.NewSource(port))
+
+	// Generate a key pair for this host.
+	priv, _, err := crypto.GenerateKeyPairWithReader(crypto.ECDSA, 2048, r)
+	if err != nil {
+		return nil, err
+	}
+
+	privbyte, _ := crypto.MarshalPrivateKey(priv)
+	fmt.Println("2:", crypto.ConfigEncodeKey(privbyte))
+	p, _ := peer.IDFromPrivateKey(priv)
+	fmt.Println(p)
+	return priv, nil
 }

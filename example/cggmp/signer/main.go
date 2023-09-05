@@ -20,8 +20,8 @@ import (
 	"os"
 
 	"github.com/getamis/sirius/log"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
@@ -45,6 +45,7 @@ type SignerConfig struct {
 type SignerResult struct {
 	R string `yaml:"r"`
 	S string `yaml:"s"`
+	V uint `yaml:"v"`
 }
 
 const signerProtocol = "/signer/1.0.0"
@@ -64,7 +65,7 @@ var Cmd = &cobra.Command{
 			return err
 		}
 
-		rawIdentity, err := base64.StdEncoding.DecodeString(cfg.Identity)
+		rawIdentity, _ := base64.StdEncoding.DecodeString(cfg.Identity)
 		priv, err := crypto.UnmarshalPrivateKey(rawIdentity)
 		if err != nil {
 			log.Crit("Failed to unmarshal", "err", err)
@@ -89,13 +90,13 @@ var Cmd = &cobra.Command{
 
 		l := node.NewListener()
 
-		dkgResult, err := utils.ConvertDKGResult(cfg.Pubkey, cfg.Share, cfg.BKs, cfg.Rid)
+		// Signer needs results from DKG and reshare.
+		dkgResult, err := utils.ConvertDKGResult(cfg.Pubkey, cfg.Share, cfg.BKs, cfg.Rid, cfg.PartialPublicKeys)
 		if err != nil {
 			log.Warn("Cannot get DKG result", "err", err)
 			return err
 		}
 
-		// Signer needs results from DKG and reshare.
 		reshareResult, err := utils.ConvertReshareResult(cfg.Share, cfg.PaillierKey, cfg.YSecret, cfg.PartialPublicKeys, cfg.Y, cfg.PedParameters)
 		if err != nil {
 			log.Warn("Cannot get DKG result", "err", err)
@@ -146,6 +147,7 @@ var Cmd = &cobra.Command{
 		signerResult := &SignerResult{
 			R: result.R.String(),
 			S: result.S.String(),
+			V: result.V,
 		}
 
 		fmt.Println()

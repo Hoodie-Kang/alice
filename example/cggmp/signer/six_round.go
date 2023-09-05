@@ -20,8 +20,8 @@ import (
 	"os"
 
 	"github.com/getamis/sirius/log"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
@@ -47,7 +47,7 @@ var SixRoundCmd = &cobra.Command{
 			return err
 		}
 
-		rawIdentity, err := base64.StdEncoding.DecodeString(cfg.Identity)
+		rawIdentity, _ := base64.StdEncoding.DecodeString(cfg.Identity)
 		priv, err := crypto.UnmarshalPrivateKey(rawIdentity)
 		if err != nil {
 			log.Crit("Failed to unmarshal", "err", err)
@@ -72,7 +72,7 @@ var SixRoundCmd = &cobra.Command{
 
 		l := node.NewListener()
 
-		dkgResult, err := utils.ConvertDKGResult(cfg.Pubkey, cfg.Share, cfg.BKs, cfg.Rid)
+		dkgResult, err := utils.ConvertDKGResult(cfg.Pubkey, cfg.Share, cfg.BKs, cfg.Rid, cfg.PartialPublicKeys)
 		if err != nil {
 			log.Warn("Cannot get DKG result", "err", err)
 			return err

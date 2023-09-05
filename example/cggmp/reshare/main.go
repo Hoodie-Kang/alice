@@ -17,17 +17,15 @@ package reshare
 import (
 	"encoding/base64"
 	"fmt"
-	"math/big"
 	"os"
 
 	"github.com/getamis/sirius/log"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"gopkg.in/yaml.v2"
 
-	"github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp"
 	reshare "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	dkgexample "github.com/getamis/alice/example/cggmp/dkg"
@@ -70,7 +68,7 @@ var Cmd = &cobra.Command{
 			return err
 		}
 
-		rawIdentity, err := base64.StdEncoding.DecodeString(cfg.Identity)
+		rawIdentity, _ := base64.StdEncoding.DecodeString(cfg.Identity)
 		priv, err := crypto.UnmarshalPrivateKey(rawIdentity)
 		if err != nil {
 			log.Crit("Failed to unmarshal", "err", err)
@@ -88,28 +86,10 @@ var Cmd = &cobra.Command{
 		log.Debug("my ID", "id", selfId, "addr", host.Addrs())
 
 		// Reshare needs results from DKG.
-		dkgResult, err := utils.ConvertDKGResult(cfg.Pubkey, cfg.Share, cfg.BKs, cfg.Rid)
+		dkgResult, err := utils.ConvertDKGResult(cfg.Pubkey, cfg.Share, cfg.BKs, cfg.Rid, cfg.PartialPublicKeys)
 		if err != nil {
 			log.Warn("Cannot get DKG result", "err", err)
 			return err
-		}
-
-		partialPublicKeys := make(map[string]*ecpointgrouplaw.ECPoint, len(cfg.PartialPublicKeys))
-		for peerId, pp := range cfg.PartialPublicKeys {
-			x, ok := new(big.Int).SetString(pp.X, 10)
-			if !ok {
-				log.Crit("Cannot convert string to big int", "x", pp.X)
-			}
-			y, ok := new(big.Int).SetString(pp.Y, 10)
-			if !ok {
-				log.Crit("Cannot convert string to big int", "y", pp.Y)
-			}
-			key, err := ecpointgrouplaw.NewECPoint(utils.GetCurve(), x, y)
-			if err != nil {
-				log.Crit("Cannot get public key", "err", err)
-			}
-
-			partialPublicKeys[peerId] = key
 		}
 
 		// Create a new peer manager.
@@ -124,7 +104,7 @@ var Cmd = &cobra.Command{
 		ssid := cggmp.ComputeSSID([]byte(cfg.SessionId), []byte(dkgResult.Bks[selfId].String()), dkgResult.Rid)
 
 		// Create reshare core
-		reshareCore, err := reshare.NewRefresh(dkgResult.Share, dkgResult.PublicKey, pm, cfg.Threshold, partialPublicKeys, dkgResult.Bks, 2048, ssid, l)
+		reshareCore, err := reshare.NewRefresh(dkgResult.Share, dkgResult.PublicKey, pm, cfg.Threshold, dkgResult.PartialPubKey, dkgResult.Bks, 2048, ssid, l)
 		if err != nil {
 			log.Warn("Cannot create a new reshare core", "err", err)
 			return err

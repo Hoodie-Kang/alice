@@ -14,10 +14,13 @@
 package utils
 
 import (
+	"os"
 	"encoding/hex"
+	"encoding/json"
 	"errors"
 	"math/big"
 
+	"gopkg.in/yaml.v2"
 	"github.com/getamis/sirius/log"
 
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
@@ -42,7 +45,7 @@ func GetCurve() elliptic.Curve {
 }
 
 // ConvertDKGResult converts DKG result from config.
-func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK, rid string) (*dkg.Result, error) {
+func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK, rid string, cfgPartialPubKeys map[string]config.Pubkey) (*dkg.Result, error) {
 	// Build public key.
 	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
 	if !ok {
@@ -74,10 +77,11 @@ func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[strin
 	}
 
 	dkgResult := &dkg.Result{
-		PublicKey: pubkey,
-		Share:     share,
-		Bks:       make(map[string]*birkhoffinterpolation.BkParameter),
-		Rid:       rawRid,
+		PublicKey:     pubkey,
+		Share:         share,
+		Bks:           make(map[string]*birkhoffinterpolation.BkParameter),
+		Rid:           rawRid,
+		PartialPubKey: make(map[string]*ecpointgrouplaw.ECPoint),
 	}
 
 	// Build bks.
@@ -88,6 +92,17 @@ func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[strin
 			return nil, ErrConversion
 		}
 		dkgResult.Bks[peerID] = birkhoffinterpolation.NewBkParameter(x, bk.Rank)
+	}
+
+	// Build Partial PublicKeys
+	for peerId, pub := range cfgPartialPubKeys {
+		p, err := convertECPoint(pub.X, pub.Y)
+		if err != nil {
+			log.Error("Cannot convert EC point of PartialPubKeys", "err", err)
+			return nil, err
+		}
+
+		dkgResult.PartialPubKey[peerId] = p
 	}
 
 	return dkgResult, nil
@@ -140,7 +155,7 @@ func ConvertReshareResult(cfgShare string, paillierKey config.PaillierKey, ySecr
 	for peerId, pub := range partialPubKeys {
 		p, err := convertECPoint(pub.X, pub.Y)
 		if err != nil {
-			log.Error("Cannot convert EC point", "err", err)
+			log.Error("Cannot convert EC point of PartialPubKeys", "err", err)
 			return nil, err
 		}
 
@@ -150,7 +165,7 @@ func ConvertReshareResult(cfgShare string, paillierKey config.PaillierKey, ySecr
 	for peerId, yy := range y {
 		p, err := convertECPoint(yy.X, yy.Y)
 		if err != nil {
-			log.Error("Cannot convert EC point", "err", err)
+			log.Error("Cannot convert EC point of Y", "err", err)
 			return nil, err
 		}
 
@@ -193,4 +208,20 @@ func convertECPoint(xx, yy string) (*ecpointgrouplaw.ECPoint, error) {
 		return nil, ErrConversion
 	}
 	return ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
+}
+
+func WriteYamlFile(yamlData interface{}, filePath string) error {
+	data, err := yaml.Marshal(yamlData)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filePath, data, 0600)
+}
+
+func WriteJsonFile(jsonData interface{}, filePath string) error {
+	data, err := json.Marshal(jsonData)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filePath, data, 0600)
 }

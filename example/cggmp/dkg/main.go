@@ -22,9 +22,10 @@ import (
 	"os"
 
 	"github.com/getamis/sirius/log"
-	"github.com/libp2p/go-libp2p-core/crypto"
-	"github.com/libp2p/go-libp2p-core/host"
-	"github.com/libp2p/go-libp2p-core/network"
+	"github.com/libp2p/go-libp2p/core/crypto"
+	"github.com/libp2p/go-libp2p/core/host"
+	"github.com/libp2p/go-libp2p/core/peer"
+	"github.com/libp2p/go-libp2p/core/network"
 	"github.com/spf13/cobra"
 	"github.com/spf13/viper"
 	"google.golang.org/protobuf/proto"
@@ -73,18 +74,19 @@ var Cmd = &cobra.Command{
 			return err
 		}
 
-		rawIdentity, err := base64.StdEncoding.DecodeString(cfg.Identity)
+		rawIdentity, _ := base64.StdEncoding.DecodeString(cfg.Identity)
 		priv, err := crypto.UnmarshalPrivateKey(rawIdentity)
 		if err != nil {
 			log.Crit("Failed to unmarshal", "err", err)
 		}
-
+		fmt.Println("1:", base64.StdEncoding.EncodeToString(rawIdentity))
+		node.GenerateIdentity(cfg.Port)
 		// Make a host that listens on the given multiaddress.
 		host, err := node.MakeBasicHost(cfg.Port, priv)
 		if err != nil {
 			log.Crit("Failed to create a basic host", "err", err)
 		}
-
+		fmt.Println(peer.IDFromPrivateKey(priv))
 		selfId := host.ID().String()
 
 		log.Debug("my ID", "id", selfId, "addr", host.Addrs())
@@ -149,7 +151,7 @@ var Cmd = &cobra.Command{
 
 			log.Debug("Received partial public key", "peer", peerId, "point", p.String())
 
-			if len(partialPublicKeys) == int(cfg.Threshold) {
+			if len(partialPublicKeys) == int(pm.NumPeers()+1) {
 				done <- struct{}{}
 			}
 		})

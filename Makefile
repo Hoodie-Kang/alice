@@ -55,5 +55,6 @@ unit-test: coverage.txt
 PHONY += tss-example
 tss-example:
 	cd example/gg18 && go build
-
+tss:
+	cd example/cggmp && go build
 .PHONY: $(PHONY)
