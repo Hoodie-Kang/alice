@@ -18,7 +18,7 @@ package getamis.alice.crypto.zkproof.paillier;
 
 option go_package = "github.com/getamis/alice/crypto/zkproof/paillier";
 
-import "github.com/getamis/alice/crypto/ecpointgrouplaw/point.proto";
+import "crypto/ecpointgrouplaw/point.proto";
 
 // https://eprint.iacr.org/2021/060.pdf
 // Section 2.2

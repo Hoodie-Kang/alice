@@ -115,7 +115,7 @@ func newSigns() (map[string]*Sign, map[string]*birkhoffinterpolation.BkParameter
 		peerManagers[i] = pm
 		listeners[id] = new(mocks.StateChangedListener)
 		var err error
-		signs[id], err = NewSign(threshold, ssidInfo, shares[i], publicKey, partialPubKey, allY, paillierKey[i], allPed, bks, msg, peerManagers[i], listeners[id])
+		signs[id], err = NewSign(threshold, ssidInfo, shares[i], publicKey, partialPubKey, allY, paillierKey[i], allPed, bks, msg, "jwt", peerManagers[i], listeners[id])
 		Expect(err).Should(BeNil())
 		signsMain[id] = signs[id]
 		r, err := signs[id].GetResult()

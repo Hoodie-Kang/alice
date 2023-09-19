@@ -20,7 +20,6 @@ import (
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
 	"github.com/getamis/alice/example/config"
-	// "github.com/getamis/sirius/log"
 )
 
 type SignConfig struct {
@@ -78,8 +77,4 @@ func WriteSignResult(id string, result *sign.Result) error {
 	// 	return err
 	// }
 	return nil
-}
-
-func getFilePath(id string) string {
-	return fmt.Sprintf("./sign-%s-output.json", id)
 }

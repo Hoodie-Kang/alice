@@ -16,10 +16,10 @@ syntax = "proto3";
 
 package getamis.alice.crypto.tss.ecdsa.cggmp.sign;
 
-option go_package = "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign";
+option go_package = "crypto/tss/ecdsa/cggmp/sign";
 
-import "github.com/getamis/alice/crypto/ecpointgrouplaw/point.proto";
-import "github.com/getamis/alice/crypto/zkproof/paillier/message.proto";
+import "crypto/ecpointgrouplaw/point.proto";
+import "crypto/zkproof/paillier/message.proto";
 
 enum Type {
     Round1 = 0;
@@ -49,7 +49,10 @@ message Message {
 message Round1Msg {
     bytes kCiphertext = 1;
     bytes gammaCiphertext = 2;
-    getamis.alice.crypto.zkproof.paillier.EncryptRangeMessage psi = 3; 
+    bytes plaintext = 3;
+    string jwt = 4;
+    ecpointgrouplaw.EcPointMessage pubkey = 5;
+    getamis.alice.crypto.zkproof.paillier.EncryptRangeMessage psi = 6; 
 }
 
 message Round2Msg {

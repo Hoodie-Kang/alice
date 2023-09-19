@@ -19,19 +19,20 @@ import (
 	"fmt"
 	"math/rand"
 
-	"github.com/getamis/sirius/log"
-	"github.com/golang/protobuf/proto"
+	"google.golang.org/protobuf/proto"
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/multiformats/go-multiaddr"
+	"github.com/getamis/alice/example/logger"
 )
 
 // MakeBasicHost creates a LibP2P host.
 func MakeBasicHost(port int64) (host.Host, error) {
 	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
+	// sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", port))
 	if err != nil {
 		return nil, err
 	}
@@ -65,8 +66,7 @@ func getPeerAddr(port int64) (string, error) {
 	if err != nil {
 		return "", err
 	}
-	// return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", port, pid), nil
-	return fmt.Sprintf("/ip4/172.16.2.117/tcp/%d/p2p/%s", port, pid), nil
+	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", port, pid), nil
 }
 // Fix me: generateIdentity generates a fixed key pair by using "something(tss 대표지갑 인덱스)" as random source.
 func generateIdentity(port int64) (crypto.PrivKey, error) {
@@ -86,47 +86,47 @@ func generateIdentity(port int64) (crypto.PrivKey, error) {
 func send(ctx context.Context, host host.Host, target string, data interface{}, protocol protocol.ID) error {
 	msg, ok := data.(proto.Message)
 	if !ok {
-		log.Warn("invalid proto message")
+		logger.Error("invalid proto message", map[string]string{})
 		return errors.New("invalid proto message")
 	}
 	// Turn the destination into a multiaddr.
 	maddr, err := multiaddr.NewMultiaddr(target)
 	if err != nil {
-		log.Warn("Cannot parse the target address", "target", target, "err", err)
+		logger.Error("Cannot parse the target address", map[string]string{"target": target, "err": err.Error()})
 		return err
 	}
 
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(maddr)
 	if err != nil {
-		log.Warn("Cannot parse addr", "addr", maddr, "err", err)
+		logger.Error("Cannot parse addr", map[string]string{"addr": maddr.String(), "err": err.Error()})
 		return err
 	}
 
 	s, err := host.NewStream(ctx, info.ID, protocol)
 	if err != nil {
-		log.Warn("Cannot create a new stream", "from", host.ID(), "to", target, "err", err)
+		logger.Error("Cannot create a new stream", map[string]string{"from": host.ID().String(), "to": target, "err": err.Error()})
 		return err
 	}
 
 	bs, err := proto.Marshal(msg)
 	if err != nil {
-		log.Warn("Cannot marshal message", "err", err)
+		logger.Error("Cannot marshal message", map[string]string{"err": err.Error()})
 		return err
 	}
 
 	_, err = s.Write(bs)
 	if err != nil {
-		log.Warn("Cannot write message to IO", "err", err)
+		logger.Warn("Cannot write message to IO", map[string]string{"err": err.Error()})
 		return err
 	}
 	err = s.Close()
 	if err != nil {
-		log.Warn("Cannot close the stream", "err", err)
+		logger.Warn("Cannot close the stream", map[string]string{"err": err.Error()})
 		return err
 	}
 
-	// log.Info("Sent message", "peer", target)
+	logger.Info("Sent message", map[string]string{"to": target})
 	return nil
 }
 
@@ -135,21 +135,21 @@ func connect(ctx context.Context, host host.Host, target string) error {
 	// Turn the destination into a multiaddr.
 	maddr, err := multiaddr.NewMultiaddr(target)
 	if err != nil {
-		log.Warn("Cannot parse the target address", "target", target, "err", err)
+		logger.Error("Cannot parse the target address", map[string]string{"target": target, "err": err.Error()})
 		return err
 	}
 
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(maddr)
 	if err != nil {
-		log.Error("Cannot parse addr", "addr", maddr, "err", err)
+		logger.Error("Cannot parse addr", map[string]string{"addr": maddr.String(), "err": err.Error()})
 		return err
 	}
 
 	// Connect the host to the peer.
 	err = host.Connect(ctx, *info)
 	if err != nil {
-		log.Warn("Failed to connect to peer", "err", err)
+		logger.Warn("Failed to connect to peer", map[string]string{"err": err.Error()})
 		return err
 	}
 	return nil

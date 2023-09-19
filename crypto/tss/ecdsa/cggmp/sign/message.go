@@ -51,6 +51,8 @@ func (m *Message) GetEchoMessage() types.Message {
 			Round1: &Round1Msg{
 				KCiphertext:     m.GetRound1().GetKCiphertext(),
 				GammaCiphertext: m.GetRound1().GetGammaCiphertext(),
+				Plaintext:       m.GetRound1().GetPlaintext(),
+				Jwt:             m.GetRound1().GetJwt(),
 				// Not broadcast to all in echo protocol
 				// Psi:             m.GetRound1().GetPsi(),
 			},

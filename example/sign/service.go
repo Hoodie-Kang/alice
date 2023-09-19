@@ -15,13 +15,13 @@ package sign
 
 import (
 	"encoding/hex"
-	"io/ioutil"
+	"io"
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/alice/types"
-	"github.com/getamis/sirius/log"
-	"github.com/golang/protobuf/proto"
+	"github.com/getamis/alice/example/logger"
+	"google.golang.org/protobuf/proto"
 	"github.com/libp2p/go-libp2p/core/network"
 )
 
@@ -33,7 +33,7 @@ type service struct {
 	done chan struct{}
 }
 
-func NewService(config *SignConfig, pm types.PeerManager) (*service, error) {
+func NewService(config *SignConfig, jwt string, pm types.PeerManager) (*service, error) {
 	s := &service{
 		config: config,
 		pm:     pm,
@@ -41,16 +41,16 @@ func NewService(config *SignConfig, pm types.PeerManager) (*service, error) {
 	}
 
 	// Inputs from DKG & Refresh Results
-	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.AllY, config.PaillierKey, config.Ped, config.BKs, "")
+	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.AllY, config.PaillierKey, config.Ped, config.BKs, config.Message)
 	if err != nil {
-		log.Warn("Cannot get SignInput", "err", err)
+		logger.Warn("Cannot get SignInput", map[string]string{"err": err.Error()})
 		return nil, err
 	}
 	msg, _ := hex.DecodeString(config.Message)
 	// Create sign
-	sign, err := sign.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.Y, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, msg, pm, s)
+	sign, err := sign.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.Y, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, msg, jwt, pm, s)
 	if err != nil {
-		log.Warn("Cannot create a new sign", "err", err)
+		logger.Warn("Cannot create a new sign", map[string]string{"err": err.Error()})
 		return nil, err
 	}
 	s.Sign = sign
@@ -59,9 +59,9 @@ func NewService(config *SignConfig, pm types.PeerManager) (*service, error) {
 
 func (p *service) Handle(s network.Stream) {
 	data := &sign.Message{}
-	buf, err := ioutil.ReadAll(s)
+	buf, err := io.ReadAll(s)
 	if err != nil {
-		log.Warn("Cannot read data from stream", "err", err)
+		logger.Warn("Cannot read data from stream", map[string]string{"err": err.Error()})
 		return
 	}
 	s.Close()
@@ -69,14 +69,14 @@ func (p *service) Handle(s network.Stream) {
 	// unmarshal it
 	err = proto.Unmarshal(buf, data)
 	if err != nil {
-		log.Error("Cannot unmarshal data", "err", err)
+		logger.Error("Cannot unmarshal data", map[string]string{"err": err.Error()})
 		return
 	}
 
-	log.Info("Received request", "from", s.Conn().RemotePeer())
+	logger.Info("Received request", map[string]string{"from": s.Conn().RemotePeer().String()})
 	err = p.Sign.AddMessage(data.GetId(), data)
 	if err != nil {
-		log.Warn("Cannot add message to sign", "err", err)
+		logger.Warn("Cannot add message to sign", map[string]string{"err": err.Error()})
 		return
 	}
 }
@@ -92,19 +92,19 @@ func (p *service) Process() {
 
 func (p *service) OnStateChanged(oldState types.MainState, newState types.MainState) {
 	if newState == types.StateFailed {
-		log.Error("Sign failed", "old", oldState.String(), "new", newState.String())
+		logger.Error("Sign failed", map[string]string{"old": oldState.String(), "new": newState.String()})
 		close(p.done)
 		return
 	} else if newState == types.StateDone {
-		log.Info("Sign done", "old", oldState.String(), "new", newState.String())
+		logger.Info("Sign done", map[string]string{"old": oldState.String(), "new": newState.String()})
 		result, err := p.Sign.GetResult()
 		if err == nil {
 			WriteSignResult(p.pm.SelfID(), result)
 		} else {
-			log.Warn("Failed to get result from sign", "err", err)
+			logger.Warn("Failed to get result from sign", map[string]string{"err": err.Error()})
 		}
 		close(p.done)
 		return
 	}
-	log.Info("State changed", "old", oldState.String(), "new", newState.String())
+	logger.Info("State changed", map[string]string{"old": oldState.String(), "new": newState.String()})
 }

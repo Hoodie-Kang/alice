@@ -19,7 +19,7 @@ import (
 	"time"
 
 	"github.com/getamis/alice/example/utils"
-	"github.com/getamis/sirius/log"
+	"github.com/getamis/alice/example/logger"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/protocol"
 )
@@ -85,7 +85,7 @@ func (p *peerManager) AddPeers(peerPorts []int64) error {
 		peerID := utils.GetPeerIDFromPort(peerPort)
 		peerAddr, err := getPeerAddr(peerPort)
 		if err != nil {
-			log.Warn("Cannot get peer address", "peerPort", peerPort, "peerID", peerID, "err", err)
+			logger.Warn("Cannot get peer address", map[string]string{"peerID": peerID, "err": err.Error()})
 			return err
 		}
 		p.peers[peerID] = peerAddr
@@ -102,7 +102,6 @@ func connectToPeer(host host.Host, peerAddr string, wg *sync.WaitGroup) error {
 		done <- true
 	} (ch)
 
-	logger := log.New("to", peerAddr)
 	for {
 		// Connect the host to the peer.
 		err := connect(context.Background(), host, peerAddr)
@@ -111,12 +110,11 @@ func connectToPeer(host host.Host, peerAddr string, wg *sync.WaitGroup) error {
 			case <-ch:
 				return err
 			default:
-				logger.Warn("Failed to connect to peer", "err", err)
 				time.Sleep(3 * time.Second)
 				continue
 			}
 		}
-		logger.Debug("Successfully connect to peer")
+		logger.Info("Successfully connect to peer", map[string]string{"to": peerAddr})
 		return nil
 	}
 }

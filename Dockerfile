@@ -1,9 +1,17 @@
-FROM golang:1.19.4
+# Build stage
+FROM golang:1.19.4 AS build
 
-WORKDIR /go/src/alice
+WORKDIR /go/src
 
 COPY . .
 
-RUN cd example && go build -o p2p_test ./sign.go
+RUN cd example && go build -o test ./sign.go
 
-CMD ["./example/p2p_test"]
+# Run stage
+FROM golang:1.19.4 AS run
+
+WORKDIR /go/src
+
+COPY --from=build /go/src/example/test /go/src/
+
+CMD ["./test"]

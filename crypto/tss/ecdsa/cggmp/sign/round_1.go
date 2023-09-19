@@ -27,6 +27,7 @@ import (
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
+	"github.com/getamis/alice/example/logger"
 )
 
 const (
@@ -64,6 +65,7 @@ type round1Handler struct {
 	paillierKey     *paillier.Paillier
 	bkpartialPubKey *pt.ECPoint
 	msg             []byte
+	jwt             string
 
 	delta    *big.Int
 	chi      *big.Int
@@ -88,7 +90,7 @@ type round1Handler struct {
 	own         *peer
 }
 
-func newRound1Handler(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey, allY map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, msg []byte, peerManager types.PeerManager) (*round1Handler, error) {
+func newRound1Handler(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey, allY map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, msg []byte, jwt string, peerManager types.PeerManager) (*round1Handler, error) {
 	curveN := pubKey.GetCurve().Params().N
 	// Establish BK Coefficient:
 	selfId := peerManager.SelfID()
@@ -154,6 +156,7 @@ func newRound1Handler(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.
 		paillierKey:     paillierKey,
 		bkpartialPubKey: own.partialPubKey.ScalarMult(own.bkcoefficient),
 		msg:             msg,
+		jwt:             jwt,
 
 		k:               k,
 		rho:             rho,
@@ -180,21 +183,21 @@ func (p *round1Handler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *round1Handler) IsHandled(logger log.Logger, id string) bool {
+func (p *round1Handler) IsHandled(logg log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Warn("Peer not found", map[string]string{})
 		return false
 	}
 	return peer.Messages[p.MessageType()] != nil
 }
 
-func (p *round1Handler) HandleMessage(logger log.Logger, message types.Message) error {
+func (p *round1Handler) HandleMessage(logg log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Warn("Peer not found", map[string]string{})
 		return tss.ErrPeerNotFound
 	}
 
@@ -202,7 +205,13 @@ func (p *round1Handler) HandleMessage(logger log.Logger, message types.Message) 
 	ownPed := p.own.para
 	peerPed := peer.para
 	n := peerPed.Getn()
-
+	peerPubkey, _ := round1.Pubkey.ToPoint()
+	if p.pubKey != peerPubkey {
+		logger.Error("Public key mismatch", map[string]string{"pubkey": p.pubKey.String(), "peerPubkey": peerPubkey.String()})
+		return errors.New("Public key mismatch")
+	}
+	p.msg = round1.Plaintext
+	p.jwt = round1.Jwt
 	// verify Proof_enc
 	err := round1.Psi.Verify(parameter, p.own.ssidWithBk, round1.KCiphertext, n, ownPed)
 	if err != nil {
@@ -211,7 +220,7 @@ func (p *round1Handler) HandleMessage(logger log.Logger, message types.Message) 
 	return peer.AddMessage(msg)
 }
 
-func (p *round1Handler) Finalize(logger log.Logger) (types.Handler, error) {
+func (p *round1Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	// Compute Gamma = gamma*G
 	curve := p.pubKey.GetCurve()
 	Gamma := pt.ScalarBaseMult(curve, p.gamma)
@@ -291,6 +300,7 @@ func (p *round1Handler) sendRound1Messages() error {
 		if err != nil {
 			return err
 		}
+		pubkey, _ := p.pubKey.ToEcPointMessage()
 		p.peerManager.MustSend(id, &Message{
 			Id:   selfId,
 			Type: Type_Round1,
@@ -298,6 +308,9 @@ func (p *round1Handler) sendRound1Messages() error {
 				Round1: &Round1Msg{
 					KCiphertext:     p.kCiphertext.Bytes(),
 					GammaCiphertext: p.gammaCiphertext.Bytes(),
+					Plaintext:       p.msg,
+					Jwt:             p.jwt,
+					Pubkey:          pubkey,
 					Psi:             psi,
 				},
 			},

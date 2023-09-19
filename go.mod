@@ -16,9 +16,10 @@ require (
 	github.com/spf13/cobra v0.0.5
 	github.com/spf13/viper v1.8.1
 	github.com/stretchr/testify v1.8.2
+	go.uber.org/zap v1.25.0
 	golang.org/x/crypto v0.7.0
 	gonum.org/v1/gonum v0.7.0
-	google.golang.org/protobuf v1.30.0
+	google.golang.org/protobuf v1.31.0
 	gopkg.in/yaml.v2 v2.4.0
 )
 
@@ -56,6 +57,7 @@ require (
 	github.com/klauspost/cpuid/v2 v2.2.5 // indirect
 	github.com/koron/go-ssdp v0.0.4 // indirect
 	github.com/kr/pretty v0.3.0 // indirect
+	github.com/lestrrat-go/strftime v1.0.6 // indirect
 	github.com/libp2p/go-buffer-pool v0.1.0 // indirect
 	github.com/libp2p/go-cidranger v1.1.0 // indirect
 	github.com/libp2p/go-flow-metrics v0.1.0 // indirect
@@ -107,11 +109,9 @@ require (
 	github.com/spf13/pflag v1.0.5 // indirect
 	github.com/stretchr/objx v0.5.0 // indirect
 	github.com/subosito/gotenv v1.2.0 // indirect
-	go.uber.org/atomic v1.11.0 // indirect
 	go.uber.org/dig v1.17.0 // indirect
 	go.uber.org/fx v1.19.3 // indirect
 	go.uber.org/multierr v1.11.0 // indirect
-	go.uber.org/zap v1.24.0 // indirect
 	golang.org/x/exp v0.0.0-20230321023759-10a507213a29 // indirect
 	golang.org/x/mod v0.10.0 // indirect
 	golang.org/x/net v0.10.0 // indirect
@@ -126,6 +126,8 @@ require (
 )
 
 require (
+	github.com/lestrrat-go/file-rotatelogs v2.4.0+incompatible
 	github.com/pelletier/go-toml v1.9.4 // indirect
 	github.com/rollbar/rollbar-go v1.2.0 // indirect
+	gopkg.in/natefinch/lumberjack.v2 v2.2.1
 )

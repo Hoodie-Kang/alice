@@ -24,7 +24,7 @@ import (
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/alice/types/message"
-	"github.com/getamis/sirius/log"
+	"github.com/getamis/alice/example/logger"
 )
 
 type Sign struct {
@@ -32,9 +32,9 @@ type Sign struct {
 	types.MessageMain
 }
 
-func NewSign(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey, allY map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, msg []byte, peerManager types.PeerManager, listener types.StateChangedListener) (*Sign, error) {
+func NewSign(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey, allY map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, msg []byte, jwt string, peerManager types.PeerManager, listener types.StateChangedListener) (*Sign, error) {
 	peerNum := peerManager.NumPeers()
-	ph, err := newRound1Handler(threshold, ssid, share, pubKey, partialPubKey, allY, paillierKey, ped, bks, msg, peerManager)
+	ph, err := newRound1Handler(threshold, ssid, share, pubKey, partialPubKey, allY, paillierKey, ped, bks, msg, jwt, peerManager)
 	if err != nil {
 		return nil, err
 	}
@@ -55,7 +55,7 @@ func (d *Sign) GetResult() (*Result, error) {
 	h := d.GetHandler()
 	rh, ok := h.(*round4Handler)
 	if !ok {
-		log.Error("We cannot convert to result handler in done state")
+		logger.Error("We cannot convert to result handler in done state", map[string]string{})
 		return nil, tss.ErrNotReady
 	}
 
