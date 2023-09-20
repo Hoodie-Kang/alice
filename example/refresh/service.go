@@ -14,7 +14,7 @@
 package refresh
 
 import (
-	"io/ioutil"
+	"io"
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
@@ -63,7 +63,7 @@ func NewService(config *RefreshConfig, pm types.PeerManager, path string) (*serv
 
 func (p *service) Handle(s network.Stream) {
 	data := &refresh.Message{}
-	buf, err := ioutil.ReadAll(s)
+	buf, err := io.ReadAll(s)
 	if err != nil {
 		log.Warn("Cannot read data from stream", "err", err)
 		return

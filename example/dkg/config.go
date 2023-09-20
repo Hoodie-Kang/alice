@@ -41,7 +41,7 @@ func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result, path stri
 			Y: refreshInput.PublicKey.GetY().String(),
 		},
 		BKs:           make(map[string]config.BK),
-		PartialPubKey: make(map[string]config.PartialPubKey),
+		PartialPubKey: make(map[string]config.ECPoint),
 		SSid:          refreshInput.SSid,
 	}
 	for peerID, bk := range refreshInput.Bks {
@@ -61,7 +61,7 @@ func writeDKGResult(id string, c *DKGConfig, refreshInput *dkg.Result, path stri
 		} else if peerID == "id-10002" {
 			peerID = "id-10004"
 		}
-		refreshResult.PartialPubKey[peerID] = config.PartialPubKey{
+		refreshResult.PartialPubKey[peerID] = config.ECPoint{
 			X: ppk.GetX().String(),
 			Y: ppk.GetY().String(),
 		}

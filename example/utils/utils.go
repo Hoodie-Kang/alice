@@ -65,7 +65,7 @@ func GetCurve() elliptic.Curve {
 }
 
 // ConvertDKGResult converts DKG result from config.
-func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK, cfgPPK map[string]config.PartialPubKey) (*dkg.Result, error) {
+func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK, cfgPPK map[string]config.ECPoint) (*dkg.Result, error) {
 	// Build public key.
 	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
 	if !ok {
@@ -129,9 +129,7 @@ func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[strin
 	return dkgResult, nil
 }
 // ConvertSignInput converts SingInput(=DKG&Refresh result) from config.
-// paillierKey *paillier.Paillier 를 직접 받아오지 못하기 때문에, 일단 PedPara 즉, p q 값을 가져와서 paillierkey 를 만들어서 사용함.
-// -> 이 방식은 private key를 드러내는 위험한 방식이므로 테스트 후 key가 드러나지 않게 가져오는 방법으로 반드시 수정해야함.
-func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[string]config.PartialPubKey, cfgAllYs map[string]config.AllY, cfgPriv config.PaillierKey, cfgPed map[string]config.Ped, cfgBKs map[string]config.BK, cfgYSec string) (*SignInput, error) {
+func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[string]config.ECPoint, cfgPriv config.PaillierKey, cfgPed map[string]config.Ped, cfgBKs map[string]config.BK, cfgYSec string) (*SignInput, error) {
 	// Build public key.
 	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
 	if !ok {
@@ -203,25 +201,6 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 			return nil, err
 		}
 		signInput.PartialPubKey[peerID] = ppkey
-	}
-	// Build All Y.
-	for peerID, ally := range cfgAllYs {
-		x, ok := new(big.Int).SetString(ally.X, 10)
-		if !ok {
-			log.Error("Cannot convert string to big int", "x", ally.X)
-			return nil, ErrConversion
-		}
-		y, ok := new(big.Int).SetString(ally.Y, 10)
-		if !ok {
-			log.Error("Cannot convert string to big int", "y", ally.Y)
-			return nil, ErrConversion
-		}
-		allY, err := ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
-		if err != nil {
-			log.Error("Cannot get partial public key", "err", err)
-			return nil, err
-		}
-		signInput.Y[peerID] = allY
 	}
 
 	// Build PedParameter

@@ -41,14 +41,14 @@ func NewService(config *SignConfig, jwt string, pm types.PeerManager) (*service,
 	}
 
 	// Inputs from DKG & Refresh Results
-	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.AllY, config.PaillierKey, config.Ped, config.BKs, config.Message)
+	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.PaillierKey, config.Ped, config.BKs, config.Message)
 	if err != nil {
 		logger.Warn("Cannot get SignInput", map[string]string{"err": err.Error()})
 		return nil, err
 	}
 	msg, _ := hex.DecodeString(config.Message)
 	// Create sign
-	sign, err := sign.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.Y, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, msg, jwt, pm, s)
+	sign, err := sign.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, msg, jwt, pm, s)
 	if err != nil {
 		logger.Warn("Cannot create a new sign", map[string]string{"err": err.Error()})
 		return nil, err

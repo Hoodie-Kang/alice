@@ -26,12 +26,12 @@ type SignConfig struct {
 	Port    int64                                 `json:"port"`
 	Share   string                                `json:"share"`
 	Pubkey  config.Pubkey                         `json:"pubkey"`
-	PartialPubKey map[string]config.PartialPubKey `json:"partialPubKey"`
+	PartialPubKey map[string]config.ECPoint       `json:"partialPubKey"`
 	BKs     map[string]config.BK                  `json:"bks"`
 	Peers   []int64                               `json:"peers"`
 	Threshold uint32			                  `json:"threshold"`
 	SSid 	[]byte				                  `json:"ssid"`
-	AllY    map[string]config.AllY                `json:"ally"`
+	Y    map[string]config.ECPoint                `json:"ally"`
 	Ped     map[string]config.Ped                 `json:"ped"`
 	PaillierKey config.PaillierKey                `json:"paillierKey"`
 	Message string               

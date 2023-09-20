@@ -30,7 +30,7 @@ type RefreshConfig struct {
 	Share         string                          `json:"share"`
 	Pubkey        config.Pubkey                   `json:"pubkey"`
 	BKs           map[string]config.BK            `json:"bks"`
-	PartialPubKey map[string]config.PartialPubKey `json:"partialPubKey"`
+	PartialPubKey map[string]config.ECPoint       `json:"partialPubKey"`
 	SSid          []byte                          `json:"ssid"`
 }
 
@@ -42,9 +42,9 @@ type RefreshResult struct {
 	Share         string                          `json:"share"`
 	Pubkey        config.Pubkey                   `json:"pubkey"`
 	BKs           map[string]config.BK            `json:"bks"`
-	PartialPubKey map[string]config.PartialPubKey `json:"partialPubKey"`
+	PartialPubKey map[string]config.ECPoint       `json:"partialPubKey"`
 	Ped           map[string]config.Ped           `json:"ped"`
-	AllY          map[string]config.AllY          `json:"ally"`
+	Y             map[string]config.ECPoint       `json:"y"`
 	PaillierKey   config.PaillierKey              `json:"paillierKey"`
 	YSecret       string                          `json:"ysecret"`
 	SSid          []byte                          `json:"ssid"`
@@ -65,6 +65,7 @@ func ReadRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
 }
 
 func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result, path string) error {
+	p, q := result.PaillierKey.GetPQ()
 	refreshResult := &RefreshResult{
 		Port:      input.Port,
 		Rank:      input.Rank,
@@ -76,15 +77,13 @@ func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result,
 			Y: input.Pubkey.Y,
 		},
 		BKs:           make(map[string]config.BK),
-		PartialPubKey: make(map[string]config.PartialPubKey),
-		// for testing! private key p, q to make paillierkey
-		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
+		PartialPubKey: make(map[string]config.ECPoint),
 		PaillierKey: config.PaillierKey{
-			P: result.PedParameter.GetP().String(),
-			Q: result.PedParameter.GetQ().String(),
+			P: p.String(),
+			Q: q.String(),
 		},
 		Ped:  make(map[string]config.Ped),
-		AllY: make(map[string]config.AllY),
+		Y: make(map[string]config.ECPoint),
 
 		YSecret: result.YSecret.String(),
 		SSid:    input.SSid,
@@ -100,13 +99,13 @@ func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result,
 			Rank: bk.Rank,
 		}
 	}
-	for peerID, ppk := range result.RefreshPartialPubKey {
+	for peerID, ppk := range result.PartialPubKey {
 		if peerID == "id-10003" {
 			peerID = "Octet"
 		} else if peerID == "id-10004" {
 			peerID = "User"
 		}
-		refreshResult.PartialPubKey[peerID] = config.PartialPubKey{
+		refreshResult.PartialPubKey[peerID] = config.ECPoint{
 			X: ppk.GetX().String(),
 			Y: ppk.GetY().String(),
 		}
@@ -118,9 +117,9 @@ func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result,
 			peerID = "User"
 		}
 		refreshResult.Ped[peerID] = config.Ped{
-			N: ped.Getn().String(),
-			S: ped.Gets().String(),
-			T: ped.Gett().String(),
+			N: ped.GetN().String(),
+			S: ped.GetS().String(),
+			T: ped.GetT().String(),
 		}
 	}
 
@@ -130,7 +129,7 @@ func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result,
 		} else if peerID == "id-10004" {
 			peerID = "User"
 		}
-		refreshResult.AllY[peerID] = config.AllY{
+		refreshResult.Y[peerID] = config.ECPoint{
 			X: y.GetX().String(),
 			Y: y.GetY().String(),
 		}
