@@ -21,8 +21,6 @@ import (
 	// "github.com/getamis/alice/example/refresh"
 	// "github.com/getamis/alice/example/sign"
 	"github.com/getamis/alice/example/signSix"
-	"github.com/getamis/alice/example/bip32/master"
-	"github.com/getamis/alice/example/bip32/child"
 )
 
 //export Tss
@@ -41,10 +39,10 @@ func Tss(fun *C.char, argv *C.char, msg *C.char) {
 	case "signSix":
 		message := C.GoString(msg)
 		signSix.SignSix(path, message)
-	case "bip32master":
-		master.Bip32Master(path)
-	case "bip32child":
-		child.Bip32Child(path)
+	// case "bip32master":
+	// 	master.Bip32Master(path)
+	// case "bip32child":
+	// 	child.Bip32Child(path)
 	default:
 		fmt.Println("Retry: protocol match error")
 	}

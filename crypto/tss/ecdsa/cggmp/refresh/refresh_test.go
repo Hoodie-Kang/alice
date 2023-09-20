@@ -71,15 +71,15 @@ var _ = Describe("Refresh", func() {
 		for i := 0; i < len(afterShares); i++ {
 			r, err := refreshes[tss.GetTestID(i)].GetResult()
 			Expect(err).Should(BeNil())
-			afterShares[i] = r.RefreshShare
-			afterPartialRefreshPubKeys[i] = r0.RefreshPartialPubKey[tss.GetTestID(i)]
+			afterShares[i] = r.Share
+			afterPartialRefreshPubKeys[i] = r0.PartialPubKey[tss.GetTestID(i)]
 		}
 		// check that all refresh partial public keys, Y, pedParameters are all the same.
 		for i := 1; i < len(shares); i++ {
 			r, err := refreshes[tss.GetTestID(i)].GetResult()
 			Expect(err).Should(BeNil())
-			for k, v := range r0.RefreshPartialPubKey {
-				Expect(v.Equal(r.RefreshPartialPubKey[k])).Should(BeTrue())
+			for k, v := range r0.PartialPubKey {
+				Expect(v.Equal(r.PartialPubKey[k])).Should(BeTrue())
 			}
 			for k, v := range r0.Y {
 				Expect(v.Equal(r.Y[k])).Should(BeTrue())
@@ -98,7 +98,7 @@ var _ = Describe("Refresh", func() {
 			otherIndex := (i + 1) % len(shares)
 			rpai, err := refreshes[tss.GetTestID(otherIndex)].GetResult()
 			Expect(err).Should(BeNil())
-			Expect(r.RefreshPaillierKey.GetN().Cmp(rpai.PedParameter[tss.GetTestID(i)].Getn()) == 0).Should(BeTrue())
+			Expect(r.PaillierKey.GetN().Cmp(rpai.PedParameter[tss.GetTestID(i)].Getn()) == 0).Should(BeTrue())
 		}
 
 		allBks := make(birkhoffinterpolation.BkParameters, len(shares))

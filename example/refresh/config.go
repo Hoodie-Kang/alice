@@ -70,7 +70,7 @@ func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result,
 		Rank:      input.Rank,
 		Threshold: input.Threshold,
 		Peers:     input.Peers,
-		Share:     result.RefreshShare.String(),
+		Share:     result.Share.String(),
 		Pubkey: config.Pubkey{
 			X: input.Pubkey.X,
 			Y: input.Pubkey.Y,
@@ -80,8 +80,8 @@ func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result,
 		// for testing! private key p, q to make paillierkey
 		// 실제 Refresh -> Sign 과정에서는 Refresh 의 결과로 *paillier.Paillier 를 넘겨서 활용할 수 있도록 해야함.
 		PaillierKey: config.PaillierKey{
-			P: result.Ped.GetP().String(),
-			Q: result.Ped.GetQ().String(),
+			P: result.PedParameter.GetP().String(),
+			Q: result.PedParameter.GetQ().String(),
 		},
 		Ped:  make(map[string]config.Ped),
 		AllY: make(map[string]config.AllY),
