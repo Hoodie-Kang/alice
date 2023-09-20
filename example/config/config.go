@@ -23,7 +23,12 @@ type Pubkey struct {
 	X string `json:"x"`
 	Y string `json:"y"`
 }
-// for testing
+
+type ECPoint struct {
+	X string `json:"x"`
+	Y string `json:"y"`
+}
+
 type PaillierKey struct {
 	P string `json:"p"`
 	Q string `json:"q"`
@@ -32,16 +37,6 @@ type PaillierKey struct {
 type BK struct {
 	X    string `json:"x"`
 	Rank uint32 `json:"rank"`
-}
-
-type PartialPubKey struct {
-	X string `json:"x"`
-	Y string `json:"y"`
-}
-
-type AllY struct {
-	X string `json:"x"`
-	Y string `json:"y"`
 }
 
 type Ped struct {
