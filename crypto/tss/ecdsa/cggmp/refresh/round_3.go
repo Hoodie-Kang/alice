@@ -21,32 +21,17 @@ import (
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	"github.com/getamis/alice/crypto/commitment"
 	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
-	"github.com/getamis/alice/crypto/homo/paillier"
 	"github.com/getamis/alice/crypto/tss"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp"
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
+	"github.com/getamis/alice/example/logger"
 )
 
 type round3Data struct {
 	plaintextShareBig    *big.Int
 	partialRefreshPubKey map[string]*pt.ECPoint
-}
-
-// package 가 달라서 example 패키지로 export 하기 위해
-// struct field 명을 대문자로 변경해서 작업함
-// 추후에 package를 하나로 만들면 소문자로 다시 변경할 수도 있음
-type Result struct {
-	RefreshShare         *big.Int
-	RefreshPaillierKey   *paillier.Paillier
-	RefreshPartialPubKey map[string]*pt.ECPoint
-	Y                    map[string]*pt.ECPoint
-	PedParameter         map[string]*paillierzkproof.PederssenOpenParameter
-	// for testing!!
-	Ped                  *paillier.PederssenParameter
-	// El-Gamal Key? for SignSix
-	YSecret              *big.Int
 }
 
 type round3Handler struct {
@@ -76,21 +61,21 @@ func (p *round3Handler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *round3Handler) IsHandled(logger log.Logger, id string) bool {
+func (p *round3Handler) IsHandled(logg log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Warn("Peer not found", map[string]string{})
 		return false
 	}
 	return peer.Messages[p.MessageType()] != nil
 }
 
-func (p *round3Handler) HandleMessage(logger log.Logger, message types.Message) error {
+func (p *round3Handler) HandleMessage(logg log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Warn("Peer not found", map[string]string{})
 		return tss.ErrPeerNotFound
 	}
 
@@ -98,13 +83,13 @@ func (p *round3Handler) HandleMessage(logger log.Logger, message types.Message) 
 	round3Msg := msg.GetRound3()
 	plaintextShare, err := p.paillierKey.Decrypt(round3Msg.Encshare)
 	if err != nil {
-		logger.Warn("Failed to decrypted", "err", err)
+		logger.Warn("Failed to decrypted", map[string]string{"err": err.Error()})
 		return err
 	}
 
 	polyPoint, err := peer.round2.hashMsg.PointCommitment.EcPoints()
 	if err != nil {
-		logger.Warn("Failed to EcPoints", "err", err)
+		logger.Warn("Failed to EcPoints", map[string]string{"err": err.Error()})
 		return err
 	}
 	plaintextShareBig := new(big.Int).SetBytes(plaintextShare)
@@ -203,7 +188,7 @@ func (p *round3Handler) HandleMessage(logger log.Logger, message types.Message) 
 	return peer.AddMessage(msg)
 }
 
-func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
+func (p *round3Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	curve := p.pubKey.GetCurve()
 	refreshShare := new(big.Int).Set(p.refreshShare)
 	partialPubKey := make(map[string]*pt.ECPoint)
@@ -252,16 +237,13 @@ func (p *round3Handler) Finalize(logger log.Logger) (types.Handler, error) {
 
 	p.result = &Result{
 		// new Share
-		RefreshShare:       refreshShare,
-		RefreshPaillierKey: p.paillierKey,
+		Share:       refreshShare,
+		PaillierKey: p.paillierKey,
 		// refreshPartialPubKey: X
-		RefreshPartialPubKey: partialPubKey,
+		PartialPubKey: partialPubKey,
 		Y:                    Y,
 		// pedParameter: N, s, t
 		PedParameter: ped,
-		// for testing!!
-		Ped: p.ped,
-		YSecret: p.y,
 	}
 	return nil, nil
 }

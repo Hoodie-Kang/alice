@@ -35,12 +35,6 @@ var (
 	big1 = big.NewInt(1)
 )
 
-type Result struct {
-	R *big.Int
-	S *big.Int
-	V uint
-}
-
 type round4Data struct {
 	sigma *big.Int
 }
