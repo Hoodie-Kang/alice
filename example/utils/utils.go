@@ -28,13 +28,11 @@ import (
 )
 
 // For sign input
-// ped 사용해서 paillierkey 만드는 방식으로 결과를 만드는중
 type SignInput struct {
 	PublicKey     *ecpointgrouplaw.ECPoint
 	Share         *big.Int
 	Bks           map[string]*birkhoffinterpolation.BkParameter
 	PartialPubKey map[string]*ecpointgrouplaw.ECPoint
-	Y             map[string]*ecpointgrouplaw.ECPoint
 	PedParameter  map[string]*paillierzkproof.PederssenOpenParameter
 	PaillierKey   *paillier.Paillier
 	YSecret       *big.Int
@@ -100,9 +98,7 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 		Share:         share,
 		Bks:           make(map[string]*birkhoffinterpolation.BkParameter),
 		PartialPubKey: make(map[string]*ecpointgrouplaw.ECPoint),
-		Y:             make(map[string]*ecpointgrouplaw.ECPoint),
 		PedParameter:  make(map[string]*paillierzkproof.PederssenOpenParameter),
-		// for testing!! - private key
 		PaillierKey:   paillierKey,
 		YSecret:       ysec,
 	}
