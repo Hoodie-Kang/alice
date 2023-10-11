@@ -81,9 +81,6 @@ var _ = Describe("Refresh", func() {
 			for k, v := range r0.PartialPubKey {
 				Expect(v.Equal(r.PartialPubKey[k])).Should(BeTrue())
 			}
-			for k, v := range r0.Y {
-				Expect(v.Equal(r.Y[k])).Should(BeTrue())
-			}
 			for k, v := range r0.PedParameter {
 				Expect(v.GetN().Cmp(r.PedParameter[k].GetN()) == 0).Should(BeTrue())
 				Expect(v.GetS().Cmp(r.PedParameter[k].GetS()) == 0).Should(BeTrue())

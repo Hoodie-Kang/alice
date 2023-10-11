@@ -16,12 +16,12 @@ syntax = "proto3";
 
 package getamis.alice.crypto.tss.ecdsa.cggmp.refresh;
 
-option go_package = "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh";
+option go_package = "crypto/tss/ecdsa/cggmp/refresh";
 
-import "github.com/getamis/alice/crypto/ecpointgrouplaw/point.proto";
-import "github.com/getamis/alice/crypto/commitment/message.proto";
-import "github.com/getamis/alice/crypto/zkproof/message.proto";
-import "github.com/getamis/alice/crypto/zkproof/paillier/message.proto";
+import "crypto/ecpointgrouplaw/point.proto";
+import "crypto/commitment/message.proto";
+import "crypto/zkproof/message.proto";
+import "crypto/zkproof/paillier/message.proto";
 
 
 enum Type {
@@ -42,14 +42,12 @@ message Message {
 
 message HashMsg {
     commitment.PointCommitmentMessage pointCommitment = 1;
-    ecpointgrouplaw.EcPointMessage Y = 2;
-    getamis.alice.crypto.zkproof.paillier.RingPederssenParameterMessage pedPar = 3;
-    bytes rho = 4; 
-    bytes u = 5;
-    bytes ssid = 6;
-    bytes bk = 7;
-    map<string, ecpointgrouplaw.EcPointMessage> A = 8;
-    ecpointgrouplaw.EcPointMessage B = 9;
+    getamis.alice.crypto.zkproof.paillier.RingPederssenParameterMessage pedPar = 2;
+    bytes rho = 3; 
+    bytes u = 4;
+    bytes ssid = 5;
+    bytes bk = 6;
+    map<string, ecpointgrouplaw.EcPointMessage> A = 7;
 }
 
 message Round1Msg {
@@ -63,9 +61,8 @@ message Round2Msg {
 message Round3Msg {
     getamis.alice.crypto.zkproof.paillier.PaillierBlumMessage modProof = 1;
     getamis.alice.crypto.zkproof.paillier.NoSmallFactorMessage facProof = 2;
-    zkproof.SchnorrProofMessage yschnorrProof = 3;
-    bytes encshare = 4;
-    zkproof.SchnorrProofMessage shareschnorrProof = 5;
+    bytes encshare = 3;
+    zkproof.SchnorrProofMessage shareschnorrProof = 4;
 }
 
 message AuxiliaryInfoKeyRefeshErrorMessage {

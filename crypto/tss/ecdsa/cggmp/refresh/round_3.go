@@ -140,25 +140,6 @@ func (p *round3Handler) HandleMessage(logg log.Logger, message types.Message) er
 		return err
 	}
 
-	// check commitment
-	Y, err := round3Msg.YschnorrProof.V.ToPoint()
-	if err != nil {
-		return err
-	}
-	if !peer.round2.y.Equal(Y) {
-		return ErrDifferentPoint
-	}
-	B, err := p.peers[id].round2.hashMsg.B.ToPoint()
-	if err != nil {
-		return err
-	}
-	Bhat, err := round3Msg.YschnorrProof.Alpha.ToPoint()
-	if err != nil {
-		return err
-	}
-	if !B.Equal(Bhat) {
-		return ErrDifferentPoint
-	}
 	Ai, err := p.peers[id].round2.hashMsg.A[p.peerManager.SelfID()].ToPoint()
 	if err != nil {
 		return err
@@ -172,10 +153,6 @@ func (p *round3Handler) HandleMessage(logg log.Logger, message types.Message) er
 	}
 
 	G := pt.NewBase(curve)
-	err = round3Msg.YschnorrProof.Verify(G, ssidSumRho)
-	if err != nil {
-		return err
-	}
 	err = round3Msg.ShareschnorrProof.Verify(G, ssidSumRho)
 	if err != nil {
 		return err
@@ -192,7 +169,6 @@ func (p *round3Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	curve := p.pubKey.GetCurve()
 	refreshShare := new(big.Int).Set(p.refreshShare)
 	partialPubKey := make(map[string]*pt.ECPoint)
-	Y := make(map[string]*pt.ECPoint)
 	ped := make(map[string]*paillierzkproof.PederssenOpenParameter)
 	for _, peer := range p.peers {
 		plaintextShareBig := peer.round3.plaintextShareBig
@@ -210,7 +186,6 @@ func (p *round3Handler) Finalize(logg log.Logger) (types.Handler, error) {
 			}
 		}
 		partialPubKey[peer1.Id] = tempSum
-		Y[peer1.Id] = peer1.round2.y
 		ped[peer1.Id] = peer1.round2.pederssenPara
 	}
 	// Add old share to obtain the new share and renew the set of all data
@@ -218,7 +193,6 @@ func (p *round3Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	refreshShare.Add(p.oldShare, refreshShare)
 	refreshShare.Mod(refreshShare, curve.Params().N)
 	partialPubKey[selfID] = pt.ScalarBaseMult(curve, refreshShare)
-	Y[selfID] = pt.ScalarBaseMult(curve, p.y)
 	ped[selfID] = p.ped.PedersenOpenParameter
 
 	// check the correctness of new shares.
@@ -241,10 +215,8 @@ func (p *round3Handler) Finalize(logg log.Logger) (types.Handler, error) {
 		PaillierKey: p.paillierKey,
 		// refreshPartialPubKey: X
 		PartialPubKey: partialPubKey,
-		Y:                    Y,
 		// pedParameter: N, s, t
 		PedParameter: ped,
-		YSecret:      p.y,
 	}
 	return nil, nil
 }

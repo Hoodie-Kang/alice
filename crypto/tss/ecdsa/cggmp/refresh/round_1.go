@@ -49,7 +49,6 @@ type round1Handler struct {
 	threshold     uint32
 	ownBK         *birkhoffinterpolation.BkParameter
 
-	y              *big.Int
 	tau            *big.Int // Schnorr commitment of y
 	poly           *polynomial.Polynomial
 	feldCommitment *commitment.FeldmanCommitmenter
@@ -96,26 +95,12 @@ func newRound1Handler(oldShare *big.Int, pubKey *ecpointgrouplaw.ECPoint, peerMa
 		peerManager: peerManager,
 	}
 	curve := pubKey.GetCurve()
-	// Sample y in F_q and Set Y = y*G. And compute Schnorr commitment.
-	y, err := utils.RandomInt(curve.Params().N)
-	if err != nil {
-		return nil, err
-	}
-	Y := pt.ScalarBaseMult(curve, y)
-	msgY, err := Y.ToEcPointMessage()
-	if err != nil {
-		return nil, err
-	}
+	// Compute Schnorr commitment.
 	tau, err := utils.RandomInt(curve.Params().N)
 	if err != nil {
 		return nil, err
 	}
-	B := pt.ScalarBaseMult(curve, tau)
-	msgB, err := B.ToEcPointMessage()
-	if err != nil {
-		return nil, err
-	}
-
+	
 	// Generate polynomial commitment f(x) with f(0) mod q.
 	poly, err := polynomial.RandomPolynomial(curve.Params().N, p.threshold-1)
 	if err != nil {
@@ -160,22 +145,19 @@ func newRound1Handler(oldShare *big.Int, pubKey *ecpointgrouplaw.ECPoint, peerMa
 	}
 	// Compute Vi = H(ssid, i, X, A, Y, B, N, s, t, psi^hat, rho, u)
 	inputData := &HashMsg{
-		PointCommitment: feldmanCommitmenter.GetCommitmentMessage(),
-		Y:               msgY,
+		PointCommitment: feldmanCommitmenter.GetCommitmentMessage(),	
 		PedPar:          pedPar,
 		Rho:             rhoi,
 		U:               ui,
 		Ssid:            ssid,
 		Bk:              []byte(p.ownBK.String()),
 		A:               msgAi,
-		B:               msgB,
 	}
 	p.V, err = commitment.NewProtoHashCommitmenter(inputData)
 	if err != nil {
 		return nil, err
 	}
 	p.feldCommitment = feldmanCommitmenter
-	p.y = y
 	p.poly = poly
 	p.rho = rhoi
 	p.u = ui

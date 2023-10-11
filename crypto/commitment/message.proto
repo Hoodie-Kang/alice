@@ -18,7 +18,7 @@ package getamis.alice.crypto.commitment;
 
 option go_package = "github.com/getamis/alice/crypto/commitment";
 
-import "github.com/getamis/alice/crypto/ecpointgrouplaw/point.proto";
+import "crypto/ecpointgrouplaw/point.proto";
 
 // HashCommitmentMessage and HashDecommitmentMessage are for HashCommitment
 // HashCommitmentMessage contains the blake2b initial vector and data digest for commitment use

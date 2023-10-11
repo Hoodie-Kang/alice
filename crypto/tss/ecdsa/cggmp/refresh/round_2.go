@@ -37,7 +37,6 @@ type round2Data struct {
 	share         *big.Int
 	encryptShare  *big.Int
 	pederssenPara *paillierzkproof.PederssenOpenParameter
-	y             *pt.ECPoint
 	hashMsg       *HashMsg
 	factorProof   *paillierzkproof.NoSmallFactorMessage
 }
@@ -146,15 +145,10 @@ func (p *round2Handler) buildRound2Data(peerId string, commitData *HashMsg) (*ro
 	if err != nil {
 		return nil, err
 	}
-	Y, err := commitData.Y.ToPoint()
-	if err != nil {
-		return nil, err
-	}
 	return &round2Data{
 		share:         refreshshareplaintext,
 		encryptShare:  new(big.Int).SetBytes(tempEnc),
 		pederssenPara: pederssenPara,
-		y:             Y,
 		hashMsg:       commitData,
 	}, nil
 }
@@ -194,11 +188,6 @@ func (p *round2Handler) Finalize(logger log.Logger) (types.Handler, error) {
 	if err != nil {
 		return nil, err
 	}
-	// Generate Schnorr proof pi
-	ySchnorrzkproof, err := zkproof.NewSchnorrMessageWithGivenMN(p.y, big0, p.tau, big0, G, ssidSumRho)
-	if err != nil {
-		return nil, err
-	}
 
 	// Send round3 messages
 	for id, peer := range p.peers {
@@ -214,7 +203,6 @@ func (p *round2Handler) Finalize(logger log.Logger) (types.Handler, error) {
 				Round3: &Round3Msg{
 					ModProof:          modProof,
 					FacProof:          peer.round2.factorProof,
-					YschnorrProof:     ySchnorrzkproof,
 					Encshare:          peer.round2.encryptShare.Bytes(),
 					ShareschnorrProof: xijzkproof,
 				},
