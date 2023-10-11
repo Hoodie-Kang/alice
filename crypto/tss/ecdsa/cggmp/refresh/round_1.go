@@ -20,8 +20,7 @@ import (
 
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	commitment "github.com/getamis/alice/crypto/commitment"
-	ecpointgrouplaw "github.com/getamis/alice/crypto/ecpointgrouplaw"
-	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
+	"github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/homo/paillier"
 	"github.com/getamis/alice/crypto/polynomial"
 	"github.com/getamis/alice/crypto/tss"
@@ -119,14 +118,14 @@ func newRound1Handler(oldShare *big.Int, pubKey *ecpointgrouplaw.ECPoint, peerMa
 		return nil, err
 	}
 	Ai := make(map[string]*big.Int)
-	msgAi := make(map[string]*pt.EcPointMessage)
+	msgAi := make(map[string]*ecpointgrouplaw.EcPointMessage)
 	for _, peerId := range peerManager.PeerIDs() {
 		temp, err := utils.RandomInt(curve.Params().N)
 		if err != nil {
 			return nil, err
 		}
 		Ai[peerId] = temp
-		tempPoint := pt.ScalarBaseMult(curve, temp)
+		tempPoint := ecpointgrouplaw.ScalarBaseMult(curve, temp)
 		MsgTempPoint, err := tempPoint.ToEcPointMessage()
 		if err != nil {
 			return nil, err

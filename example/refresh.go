@@ -72,7 +72,7 @@ func ReadRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
 
 const refreshProtocol = "/refresh/1.0.0"
 
-// export Refresh
+//export Refresh
 func Refresh(argc *C.char, argv *C.char) {
 	port, _ := strconv.ParseInt(C.GoString(argc), 10, 64)
 	path := C.GoString(argv)
