@@ -37,7 +37,6 @@ type SignConfig struct {
 	Peers   []int64                               `json:"peers"`
 	Threshold uint32			                  `json:"threshold"`
 	SSid 	[]byte				                  `json:"ssid"`
-	Y    map[string]config.ECPoint                `json:"ally"`
 	Ped     map[string]config.Ped                 `json:"ped"`
 	PaillierKey config.PaillierKey                `json:"paillierKey"`
 	Message string               
@@ -90,7 +89,7 @@ func Sign(path string, port string, jwt string, msg string) {
 
 	l := node.NewListener()
 
-	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.PaillierKey, config.Ped, config.BKs, config.Message)
+	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.PaillierKey, config.Ped, config.BKs)
 	if err != nil {
 		logger.Error("Cannot get SignInput", map[string]string{"err": err.Error()})
 	}

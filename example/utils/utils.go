@@ -18,6 +18,7 @@ import (
 	"fmt"
 	"math/big"
 
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	"github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/elliptic"
@@ -35,7 +36,6 @@ type SignInput struct {
 	PartialPubKey map[string]*ecpointgrouplaw.ECPoint
 	PedParameter  map[string]*paillierzkproof.PederssenOpenParameter
 	PaillierKey   *paillier.Paillier
-	YSecret       *big.Int
 }
 
 var (
@@ -60,8 +60,73 @@ func GetCurve() elliptic.Curve {
 	return elliptic.Secp256k1()
 }
 
+// ConvertDKGResult converts DKG result from config.
+func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK, cfgPPK map[string]config.ECPoint) (*dkg.Result, error) {
+	// Build public key.
+	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
+	if !ok {
+		log.Error("Cannot convert string to big int", "x", cfgPubkey.X)
+		return nil, ErrConversion
+	}
+	y, ok := new(big.Int).SetString(cfgPubkey.Y, 10)
+	if !ok {
+		log.Error("Cannot convert string to big int", "y", cfgPubkey.Y)
+		return nil, ErrConversion
+	}
+	pubkey, err := ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
+	if err != nil {
+		log.Error("Cannot get public key", "err", err)
+		return nil, err
+	}
+
+	// Build share.
+	share, ok := new(big.Int).SetString(cfgShare, 10)
+	if !ok {
+		log.Error("Cannot convert string to big int", "share", share)
+		return nil, ErrConversion
+	}
+
+	dkgResult := &dkg.Result{
+		PublicKey: pubkey,
+		Share:     share,
+		Bks:       make(map[string]*birkhoffinterpolation.BkParameter),
+		PartialPubKey: make(map[string]*ecpointgrouplaw.ECPoint),
+	}
+
+	// Build bks.
+	for peerID, bk := range cfgBKs {
+		x, ok := new(big.Int).SetString(bk.X, 10)
+		if !ok {
+			log.Error("Cannot convert string to big int", "x", bk.X)
+			return nil, ErrConversion
+		}
+		dkgResult.Bks[peerID] = birkhoffinterpolation.NewBkParameter(x, bk.Rank)
+	}
+
+	// Build PartialPubKey.
+	for peerID, ppk := range cfgPPK {
+		x, ok := new(big.Int).SetString(ppk.X, 10)
+		if !ok {
+			log.Error("Cannot convert string to big int", "x", ppk.X)
+			return nil, ErrConversion
+		}
+		y, ok := new(big.Int).SetString(ppk.Y, 10)
+		if !ok {
+			log.Error("Cannot convert string to big int", "y", ppk.Y)
+			return nil, ErrConversion
+		}
+		ppkey, err := ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
+		if err != nil {
+			log.Error("Cannot get partial public key", "err", err)
+			return nil, err
+		}
+		dkgResult.PartialPubKey[peerID] = ppkey
+	}
+	return dkgResult, nil
+}
+
 // ConvertSignInput converts SingInput(=DKG&Refresh result) from config.
-func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[string]config.ECPoint, cfgPriv config.PaillierKey, cfgPed map[string]config.Ped, cfgBKs map[string]config.BK, cfgYSec string) (*SignInput, error) {
+func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[string]config.ECPoint, cfgPriv config.PaillierKey, cfgPed map[string]config.Ped, cfgBKs map[string]config.BK) (*SignInput, error) {
 	// Build public key.
 	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
 	if !ok {
@@ -90,8 +155,6 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 	q, _ := new(big.Int).SetString(cfgPriv.Q, 10)
 	// build paillierkey using ped-> p, q
 	paillierKey, _ := paillier.NewPaillierWithGivenPrimes(p, q)
-	// build ysecret
-	ysec, _ := new(big.Int).SetString(cfgYSec, 10)
 	
 	signInput := &SignInput{
 		PublicKey:     pubkey,
@@ -100,7 +163,6 @@ func ConvertSignInput(cfgShare string, cfgPubkey config.Pubkey, cfgPPK map[strin
 		PartialPubKey: make(map[string]*ecpointgrouplaw.ECPoint),
 		PedParameter:  make(map[string]*paillierzkproof.PederssenOpenParameter),
 		PaillierKey:   paillierKey,
-		YSecret:       ysec,
 	}
 
 	// Build bks.
