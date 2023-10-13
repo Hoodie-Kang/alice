@@ -26,11 +26,11 @@ type listener struct {
 func (l *listener) OnStateChanged(oldState types.MainState, newState types.MainState) {
 	if newState == types.StateFailed {
 		l.errCh <- fmt.Errorf("state %s -> %s", oldState.String(), newState.String())
-		logger.Error("Sign failed", map[string]string{"old": oldState.String(), "new": newState.String()})
+		logger.Error("Protocol failed", map[string]string{"old": oldState.String(), "new": newState.String()})
 		return
 	} else if newState == types.StateDone {
 		l.errCh <- nil
-		logger.Info("Sign done", map[string]string{"old": oldState.String(), "new": newState.String()})
+		logger.Info("Protocol done", map[string]string{"old": oldState.String(), "new": newState.String()})
 		return
 	}
 	

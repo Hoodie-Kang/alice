@@ -123,15 +123,15 @@ func Sign(path string, port string, jwt string, msg string) {
 	fmt.Println(result)
 }
 
-func main() {
-	path := os.Getenv("FILE_PATH")
-	port := os.Getenv("PORT")
-	jwt := os.Getenv("JWT")
-	msg := os.Getenv("msg")
-	// path := os.Args[1]
-	// port := os.Args[2]
-	// jwt := os.Args[3]
-	// msg := os.Args[4]
+// func main() {
+// 	path := os.Getenv("FILE_PATH")
+// 	port := os.Getenv("PORT")
+// 	jwt := os.Getenv("JWT")
+// 	msg := os.Getenv("msg")
+// 	// path := os.Args[1]
+// 	// port := os.Args[2]
+// 	// jwt := os.Args[3]
+// 	// msg := os.Args[4]
 
-	Sign(path, port, jwt, msg)
-}
+// 	Sign(path, port, jwt, msg)
+// }
