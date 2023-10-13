@@ -23,6 +23,7 @@ profile.out
 # Exclude example binaries
 example/example
 .DS_Store
+example/*.h
 
 # log
 example/*.log
