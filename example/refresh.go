@@ -23,11 +23,11 @@ import (
 	"strconv"
 
 	"github.com/getamis/alice/example/node"
-	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/alice/example/utils"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
 	"github.com/libp2p/go-libp2p/core/network"
+	logger "github.com/getamis/sirius/log"
 )
 
 type RefreshConfig struct {
@@ -78,7 +78,7 @@ func Refresh(argc *C.char, argv *C.char) {
 	path := C.GoString(argv)
 	con, err := ReadRefreshConfigFile(path)
 	if err != nil {
-		logger.Panic("Failed to read config file", map[string]string{"configFile": path, "err": err.Error()})
+		logger.Crit("Failed to read config file", "configFile", path, "err", err)
 	}
 	con.Port = port
 	if con.Peers[0] == 10002 {
@@ -89,21 +89,21 @@ func Refresh(argc *C.char, argv *C.char) {
 	// Make a host that listens on the given multiaddress.
 	host, err := node.MakeBasicHost(con.Port)
 	if err != nil {
-		logger.Error("Failed to create a basic host", map[string]string{"err": err.Error()})
+		logger.Error("Failed to create a basic host", "err", err)
 	}
 	defer host.Close()
 
 	// Refresh needs results from DKG.
 	dkgResult, err := utils.ConvertDKGResult(con.Pubkey, con.Share, con.BKs, con.PartialPubKey)
 	if err != nil {
-		logger.Error("Cannot get DKG result", map[string]string{"err": err.Error()})
+		logger.Error("Cannot get DKG result", "err", err)
 	}
 
 	// Create a new peer manager.
 	pm := node.NewPeerManager(utils.GetPeerIDFromPort(con.Port), host, refreshProtocol)
 	err = pm.AddPeers(con.Peers)
 	if err != nil {
-		logger.Error("Failed to add peers", map[string]string{"err": err.Error()})
+		logger.Error("Failed to add peers", "err", err)
 	}
 
 	l := node.NewListener()
@@ -111,13 +111,13 @@ func Refresh(argc *C.char, argv *C.char) {
 	// Create a new service.
 	service, err := refresh.NewRefresh(dkgResult.Share, dkgResult.PublicKey, pm, con.Threshold, dkgResult.PartialPubKey, dkgResult.Bks, 2048, con.SSid, l)
 	if err != nil {
-		logger.Error("Cannot create a new refresh", map[string]string{"err": err.Error()})
+		logger.Error("Cannot create a new refresh", "err", err)
 	}
 
 	// Create a new node.
 	node := node.New[*refresh.Message, *refresh.Result](service, l, pm)
 	if err != nil {
-		logger.Error("Failed to new service", map[string]string{"err": err.Error()})
+		logger.Error("Failed to new service", "err", err)
 	}
 
 	// Set a stream handler on the host.
@@ -131,7 +131,7 @@ func Refresh(argc *C.char, argv *C.char) {
 	
 	result, err := node.Process()
 	if err != nil {
-		logger.Error("Refresh Result error", map[string]string{"err": err.Error()})
+		logger.Error("Refresh Result error", "err", err)
 		return
 	}
 
@@ -195,7 +195,7 @@ func Refresh(argc *C.char, argv *C.char) {
 
 	err = config.WriteJsonFile(refreshResult, path)
 	if err != nil {
-		logger.Error("Cannot write key file", map[string]string{"err": err.Error()})
+		logger.Error("Cannot write key file", "err", err)
 	}
 
 }

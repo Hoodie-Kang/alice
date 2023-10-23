@@ -21,10 +21,10 @@ import (
 	"strconv"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/example/config"
-	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/alice/example/node"
 	"github.com/getamis/alice/example/utils"
 	"github.com/libp2p/go-libp2p/core/network"
+	logger "github.com/getamis/sirius/log"
 )
 
 type DKGConfig struct {
@@ -74,14 +74,14 @@ func Dkg(argc *C.char, argv *C.char, arg *C.char, info *C.char) {
 	// Make a host that listens on the given multiaddress.
 	host, err := node.MakeBasicHost(con.Port)
 	if err != nil {
-		logger.Error("Failed to create a basic host", map[string]string{"err": err.Error()})
+		logger.Error("Failed to create a basic host", "err", err)
 	}
 
 	// Create a new peer manager.
 	pm := node.NewPeerManager(utils.GetPeerIDFromPort(con.Port), host, dkgProtocol)
 	err = pm.AddPeers(con.Peers)
 	if err != nil {
-		logger.Error("Failed to add peers", map[string]string{"err": err.Error()})
+		logger.Error("Failed to add peers", "err", err)
 	}
 
 	l := node.NewListener()
@@ -89,13 +89,13 @@ func Dkg(argc *C.char, argv *C.char, arg *C.char, info *C.char) {
 	// Create dkg
 	service, err := dkg.NewDKG(utils.GetCurve(), pm, []byte("1"), con.Threshold, con.Rank, l)
 	if err != nil {
-		logger.Error("Cannot create a new dkg", map[string]string{"err": err.Error()})
+		logger.Error("Cannot create a new dkg", "err", err)
 	}
 
 	// Create a new service.
 	node := node.New[*dkg.Message, *dkg.Result](service, l, pm)
 	if err != nil {
-		logger.Error("Failed to new service", map[string]string{"err": err.Error()})
+		logger.Error("Failed to new service", "err", err)
 	}
 
 	// Set a stream handler on the host.
@@ -107,8 +107,8 @@ func Dkg(argc *C.char, argv *C.char, arg *C.char, info *C.char) {
 
 	// Start DKG process.
 	result, err := node.Process()
-	if err != nil {
-		logger.Error("Refresh Result error", map[string]string{"err": err.Error()})
+	if err != nil {                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                                               
+		logger.Error("Refresh Result error", "err", err)
 	}
 	dkgResult := &DKGResult{
 		Port:      con.Port,
@@ -149,8 +149,8 @@ func Dkg(argc *C.char, argv *C.char, arg *C.char, info *C.char) {
 
 	err = config.WriteJsonFile(dkgResult, getFilePath(pm.SelfID(), path, information))
 	if err != nil {
-		logger.Error("Cannot write key file", map[string]string{"err": err.Error()})
+		logger.Error("Cannot write key file", "err", err)
 	}
 }
 
-// func main() {}
+func main() {}

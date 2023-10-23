@@ -4,7 +4,7 @@ import (
 	"fmt"
 
 	"github.com/getamis/alice/types"
-	"github.com/getamis/alice/example/logger"
+	logger "github.com/getamis/sirius/log"
 )
 
 type Listener interface {
@@ -26,15 +26,14 @@ type listener struct {
 func (l *listener) OnStateChanged(oldState types.MainState, newState types.MainState) {
 	if newState == types.StateFailed {
 		l.errCh <- fmt.Errorf("state %s -> %s", oldState.String(), newState.String())
-		logger.Error("Protocol failed", map[string]string{"old": oldState.String(), "new": newState.String()})
 		return
 	} else if newState == types.StateDone {
 		l.errCh <- nil
-		logger.Info("Protocol done", map[string]string{"old": oldState.String(), "new": newState.String()})
+		logger.Info("Protocol done", "oldState", oldState, "newState", newState)
 		return
 	}
 	
-	logger.Debug("State changed", map[string]string{"old": oldState.String(), "new": newState.String()})
+	logger.Debug("State changed", "oldState", oldState, "newState", newState)
 }
 
 func (l *listener) Done() <-chan error {

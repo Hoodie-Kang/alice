@@ -222,45 +222,45 @@ func ClientSign(path string, port string, jwt string, msg string, opt string) {
 
 // var resume chan string
 
-func main() {
-	// path := os.Getenv("file_path")
-	// port := os.Getenv("port")
-	// jwt := os.Getenv("jwt")
-	// msg := os.Getenv("msg")
-	// only_once := os.Getenv("only_once")
-	// Sign(path, port, jwt, msg, only_once)
-	c1 := make(chan string)
-	c2 := make(chan string)
+// func main() {
+// 	// path := os.Getenv("file_path")
+// 	// port := os.Getenv("port")
+// 	// jwt := os.Getenv("jwt")
+// 	// msg := os.Getenv("msg")
+// 	// only_once := os.Getenv("only_once")
+// 	// Sign(path, port, jwt, msg, only_once)
+// 	c1 := make(chan string)
+// 	c2 := make(chan string)
  
-	go func() {
-	   for{
-		  time.Sleep(5 * time.Second)
-		  c1 <- "one"
-	   }
-	}()
-	go func() {
-	   for{
-		  time.Sleep(10 * time.Second)
-		  c2 <- "two"
-	   }
-	}()
+// 	go func() {
+// 	   for{
+// 		  time.Sleep(5 * time.Second)
+// 		  c1 <- "one"
+// 	   }
+// 	}()
+// 	go func() {
+// 	   for{
+// 		  time.Sleep(10 * time.Second)
+// 		  c2 <- "two"
+// 	   }
+// 	}()
  
-	for{
-	   fmt.Println("start select------------------")
-	   select {
-	   case msg1 := <-c1:
-		  fmt.Println("received", msg1)
-	   case msg2 := <-c2:
-		  fmt.Println("received", msg2)
-	   }
-	   fmt.Println("end select-------------------\n\n")
-	}
+// 	for{
+// 	   fmt.Println("start select------------------")
+// 	   select {
+// 	   case msg1 := <-c1:
+// 		  fmt.Println("received", msg1)
+// 	   case msg2 := <-c2:
+// 		  fmt.Println("received", msg2)
+// 	   }
+// 	   fmt.Println("end select-------------------\n\n")
+// 	}
 
-	// path := os.Args[1]
-	// port := os.Args[2]
-	// jwt := os.Args[3]
-	// msg := os.Args[4]
+// 	// path := os.Args[1]
+// 	// port := os.Args[2]
+// 	// jwt := os.Args[3]
+// 	// msg := os.Args[4]
 
-	// // OctetSign(path,port,jwt,msg, "false")
-	// ClientSign(path, port, jwt, msg, "false")
-}
+// 	// // OctetSign(path,port,jwt,msg, "false")
+// 	// ClientSign(path, port, jwt, msg, "false")
+// }
