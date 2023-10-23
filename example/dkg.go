@@ -153,4 +153,4 @@ func Dkg(argc *C.char, argv *C.char, arg *C.char, info *C.char) {
 	}
 }
 
-func main() {}
+// func main() {}
