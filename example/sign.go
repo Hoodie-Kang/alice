@@ -120,7 +120,7 @@ func Sign(path string, port string, jwt string, msg string) {
 		logger.Error("Sign Result error", map[string]string{"err": err.Error()})
 	}
 	// return result.R.String()+"#"+result.S.String()+"#"+strconv.FormatUint(uint64(result.V), 10) // R+S+V
-	fmt.Println(result)
+	fmt.Println("result:", result)
 }
 
 func main() {
