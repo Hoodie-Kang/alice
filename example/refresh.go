@@ -200,4 +200,4 @@ func Refresh(argc *C.char, argv *C.char) {
 
 }
 
-// func main() {}
+func main() {}

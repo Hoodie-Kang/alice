@@ -23,7 +23,6 @@ import (
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
-	"github.com/getamis/alice/example/logger"
 )
 
 var (
@@ -61,27 +60,27 @@ func (p *round2Handler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *round2Handler) IsHandled(logg log.Logger, id string) bool {
+func (p *round2Handler) IsHandled(logger log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found", map[string]string{})
+		logger.Warn("Peer not found")
 		return false
 	}
 	return peer.Messages[p.MessageType()] != nil
 }
 
-func (p *round2Handler) HandleMessage(logg log.Logger, message types.Message) error {
+func (p *round2Handler) HandleMessage(logger log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found", map[string]string{})
+		logger.Warn("Peer not found")
 		return tss.ErrPeerNotFound
 	}
 	round2 := msg.GetRound2()
 	Gamma, err := round2.Gamma.ToPoint()
 	if err != nil {
-		logger.Debug("Failed to Gamma.ToPoint", map[string]string{"err": err.Error()})
+		logger.Debug("Failed to Gamma.ToPoint","err", err)
 		return err
 	}
 
@@ -90,14 +89,14 @@ func (p *round2Handler) HandleMessage(logg log.Logger, message types.Message) er
 	// Verify psi
 	err = round2.Psi.Verify(parameter, peer.ssidWithBk, p.paillierKey.GetN(), n, p.kCiphertext, new(big.Int).SetBytes(round2.D), new(big.Int).SetBytes(round2.F), ownPed, Gamma)
 	if err != nil {
-		logger.Debug("Failed to verify", map[string]string{"err": err.Error()})
+		logger.Debug("Failed to verify", "err", err)
 		return err
 	}
 	// Verify phiHat
 	bkPartialKey := peer.partialPubKey.ScalarMult(peer.bkcoefficient)
 	err = round2.Psihat.Verify(parameter, peer.ssidWithBk, p.paillierKey.GetN(), n, p.kCiphertext, new(big.Int).SetBytes(round2.Dhat), new(big.Int).SetBytes(round2.Fhat), ownPed, bkPartialKey)
 	if err != nil {
-		logger.Debug("Failed to verify", map[string]string{"err": err.Error()})
+		logger.Debug("Failed to verify", "err", err)
 		return err
 	}
 	// Verify phipai
@@ -105,7 +104,7 @@ func (p *round2Handler) HandleMessage(logg log.Logger, message types.Message) er
 	G := pt.NewBase(curve)
 	err = round2.Psipai.Verify(parameter, peer.ssidWithBk, peer.round1Data.gammaCiphertext, n, ownPed, Gamma, G)
 	if err != nil {
-		logger.Debug("Failed to verify", map[string]string{"err": err.Error()})
+		logger.Debug("Failed to verify", "err", err)
 		return err
 	}
 
@@ -121,7 +120,7 @@ func (p *round2Handler) HandleMessage(logg log.Logger, message types.Message) er
 	return peer.AddMessage(msg)
 }
 
-func (p *round2Handler) Finalize(logg log.Logger) (types.Handler, error) {
+func (p *round2Handler) Finalize(logger log.Logger) (types.Handler, error) {
 	// Set Γ = sum_j Γj
 	var err error
 	curve := p.pubKey.GetCurve()
@@ -132,19 +131,19 @@ func (p *round2Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	for id, peer := range p.peers {
 		alpha, err := p.paillierKey.Decrypt(peer.round2Data.d.Bytes())
 		if err != nil {
-			logger.Debug("Failed to decrypt", map[string]string{"peerId": id, "err": err.Error()})
+			logger.Debug("Failed to decrypt", "peerId", id, "err", err)
 			return nil, err
 		}
 		peer.round2Data.alpha = new(big.Int).SetBytes(alpha)
 		alphahat, err := p.paillierKey.Decrypt(peer.round2Data.dhat.Bytes())
 		if err != nil {
-			logger.Debug("Failed to decrypt", map[string]string{"peerId": id, "err": err.Error()})
+			logger.Debug("Failed to decrypt", "peerId", id, "err", err)
 			return nil, err
 		}
 		peer.round2Data.alphahat = new(big.Int).SetBytes(alphahat)
 		sumGamma, err = sumGamma.Add(peer.round2Data.allGammaPoint)
 		if err != nil {
-			logger.Debug("Failed to add gamma", map[string]string{"peerId": id,"err": err.Error()})
+			logger.Debug("Failed to add gamma", "peerId", id, "err", err)
 			return nil, err
 		}
 		// Compute δi=γiki+ sum_{j!= i}(αi,j+βi,j) mod q and χi=xiki+sum_{j!=0i}(αˆi,j+βˆi,j) mod q.
@@ -156,7 +155,7 @@ func (p *round2Handler) Finalize(logg log.Logger) (types.Handler, error) {
 		chi.Mod(chi, curveN)
 	}
 	if sumGamma.IsIdentity() {
-		logger.Debug("SumGamma is identity", map[string]string{})
+		logger.Debug("SumGamma is identity")
 		return nil, ErrZeroR
 	}
 	p.sumGamma = sumGamma
@@ -166,7 +165,7 @@ func (p *round2Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	p.BigDelta = Delta
 	MsgDelta, err := Delta.ToEcPointMessage()
 	if err != nil {
-		logger.Debug("Failed to ToEcPointMessage", map[string]string{"err": err.Error()})
+		logger.Debug("Failed to ToEcPointMessage", "err", err)
 		return nil, err
 	}
 	for id, peer := range p.peers {
@@ -174,7 +173,7 @@ func (p *round2Handler) Finalize(logg log.Logger) (types.Handler, error) {
 		// Compute proof phi''
 		psidoublepaiProof, err := paillierzkproof.NewKnowExponentAndPaillierEncryption(parameter, p.own.ssidWithBk, p.k, p.rho, p.kCiphertext, p.own.para.GetN(), peerPed, Delta, sumGamma)
 		if err != nil {
-			logger.Debug("Failed to NewKnowExponentAndPaillierEncryption", map[string]string{"err": err.Error()})
+			logger.Debug("Failed to NewKnowExponentAndPaillierEncryption", "err", err)
 			return nil, err
 		}
 		p.peerManager.MustSend(id, &Message{

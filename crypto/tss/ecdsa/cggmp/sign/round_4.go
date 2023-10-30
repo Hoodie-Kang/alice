@@ -24,7 +24,6 @@ import (
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
-	"github.com/getamis/alice/example/logger"
 )
 
 var (
@@ -61,21 +60,21 @@ func (p *round4Handler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *round4Handler) IsHandled(logg log.Logger, id string) bool {
+func (p *round4Handler) IsHandled(logger log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found", map[string]string{})
+		logger.Warn("Peer not found")
 		return false
 	}
 	return peer.Messages[p.MessageType()] != nil
 }
 
-func (p *round4Handler) HandleMessage(logg log.Logger, message types.Message) error {
+func (p *round4Handler) HandleMessage(logger log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found", map[string]string{})
+		logger.Warn("Peer not found")
 		return tss.ErrPeerNotFound
 	}
 
@@ -86,7 +85,7 @@ func (p *round4Handler) HandleMessage(logg log.Logger, message types.Message) er
 	return peer.AddMessage(msg)
 }
 
-func (p *round4Handler) Finalize(logg log.Logger) (types.Handler, error) {
+func (p *round4Handler) Finalize(logger log.Logger) (types.Handler, error) {
 	curveN := p.pubKey.GetCurve().Params().N
 	// Set σ=sum_j σj.
 	s := new(big.Int).Set(p.sigma)
@@ -109,7 +108,7 @@ func (p *round4Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	if !isCorrectSig {
 		err := p.buildSigmaVerifyFailureMsg()
 		if err != nil {
-			logger.Warn("Failed to buildSigmaVerifyFailureMsg", map[string]string{"err": err.Error()})
+			logger.Warn("Failed to buildSigmaVerifyFailureMsg", "err", err)
 		}
 		return nil, errors.New("incorrect sig")
 	}

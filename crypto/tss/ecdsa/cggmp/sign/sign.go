@@ -24,7 +24,7 @@ import (
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/alice/types/message"
-	"github.com/getamis/alice/example/logger"
+	logger "github.com/getamis/sirius/log"
 )
 
 type Sign struct {
@@ -61,7 +61,7 @@ func (d *Sign) GetResult() (*Result, error) {
 	h := d.GetHandler()
 	rh, ok := h.(*round4Handler)
 	if !ok {
-		logger.Error("We cannot convert to result handler in done state", map[string]string{})
+		logger.Error("We cannot convert to result handler in done state")
 		return nil, tss.ErrNotReady
 	}
 

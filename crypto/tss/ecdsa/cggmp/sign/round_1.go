@@ -27,7 +27,6 @@ import (
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/sirius/log"
-	"github.com/getamis/alice/example/logger"
 )
 
 const (
@@ -183,21 +182,21 @@ func (p *round1Handler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *round1Handler) IsHandled(logg log.Logger, id string) bool {
+func (p *round1Handler) IsHandled(logger log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found", map[string]string{})
+		logger.Warn("Peer not found")
 		return false
 	}
 	return peer.Messages[p.MessageType()] != nil
 }
 
-func (p *round1Handler) HandleMessage(logg log.Logger, message types.Message) error {
+func (p *round1Handler) HandleMessage(logger log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found", map[string]string{})
+		logger.Warn("Peer not found")
 		return tss.ErrPeerNotFound
 	}
 
