@@ -44,8 +44,6 @@ type RefreshConfig struct {
 
 type RefreshResult struct {
 	Port          int64                           `json:"port"`
-	Rank          uint32                          `json:"rank"`
-	Threshold     uint32                          `json:"threshold"`
 	Peers         []int64                         `json:"peers"`
 	Share         string                          `json:"share"`
 	Pubkey        config.Pubkey                   `json:"pubkey"`
@@ -109,7 +107,7 @@ func Refresh(argc *C.char, argv *C.char) {
 	l := node.NewListener()
 
 	// Create a new service.
-	service, err := refresh.NewRefresh(dkgResult.Share, dkgResult.PublicKey, pm, con.Threshold, dkgResult.PartialPubKey, dkgResult.Bks, 2048, con.SSid, l)
+	service, err := refresh.NewRefresh(dkgResult.Share, dkgResult.PublicKey, pm, 2, dkgResult.PartialPubKey, dkgResult.Bks, 2048, con.SSid, l)
 	if err != nil {
 		logger.Error("Cannot create a new refresh", "err", err)
 	}
@@ -127,7 +125,7 @@ func Refresh(argc *C.char, argv *C.char) {
 
 	// Ensure all peers are connected before starting refresh process.
 	pm.EnsureAllConnected()
-	logger.Debug("Starting refresh process", map[string]string{})
+	logger.Debug("Starting refresh process")
 	
 	result, err := node.Process()
 	if err != nil {
@@ -140,8 +138,6 @@ func Refresh(argc *C.char, argv *C.char) {
 	// func WriteRefreshResult(id string, input *RefreshConfig, result *refresh.Result, path string) error {
 	refreshResult := &RefreshResult{
 		Port:      con.Port,
-		Rank:      con.Rank,
-		Threshold: con.Threshold,
 		Peers:     con.Peers,
 		Share:     result.Share.String(),
 		Pubkey:    config.Pubkey{
@@ -200,4 +196,4 @@ func Refresh(argc *C.char, argv *C.char) {
 
 }
 
-func main() {}
+// func main() {}

@@ -172,7 +172,7 @@ func (p *peerManager) EnsureAllConnected() {
 					time.Sleep(3 * time.Second)
 					continue
 				}
-				logger.Info("Successfully connect to peer", addr)
+				logger.Info("Successfully connect to peer", "peer", addr)
 				return
 			}
 		}()

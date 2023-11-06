@@ -36,8 +36,6 @@ type DKGConfig struct {
 
 type DKGResult struct {
 	Port          int64                     `json:"port"`
-	Rank          uint32                    `json:"rank"`
-	Threshold     uint32                    `json:"threshold"`
 	Peers         []int64                   `json:"peers"`
 	Share         string                    `json:"share"`
 	Pubkey        config.Pubkey             `json:"pubkey"`
@@ -112,8 +110,6 @@ func Dkg(argc *C.char, argv *C.char, arg *C.char, info *C.char) {
 	}
 	dkgResult := &DKGResult{
 		Port:      con.Port,
-		Rank:      con.Rank,
-		Threshold: con.Threshold,
 		Peers:     con.Peers,
 		Share:     result.Share.String(),
 		Pubkey:    config.Pubkey{
@@ -153,4 +149,4 @@ func Dkg(argc *C.char, argv *C.char, arg *C.char, info *C.char) {
 	}
 }
 
-// func main() {}
+func main() {}
