@@ -165,8 +165,10 @@ func (p *peerManager) EnsureAllConnected() {
 			defer wg.Done()
 
 			for {
-				// Connect the host to the peer.
-				err := connect(context.Background(), p.host, addr)
+				// Connect the host to the peer. with timeout
+				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				defer cancel()
+				err := connect(ctx, p.host, addr)
 				if err != nil {
 					// logger.Warn("Failed to connect to peer", "err", err)
 					time.Sleep(3 * time.Second)
