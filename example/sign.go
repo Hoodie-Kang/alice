@@ -18,8 +18,6 @@ import (
 	"encoding/json"
 	"flag"
 	"fmt"
-	"io"
-	"net/http"
 	"os"
 	"strconv"
 
@@ -51,10 +49,6 @@ type SignResult struct {
 	V uint   `json:"v"`
 }
 
-type User struct {
-	Idx string `json:"idx"`
-}
-
 func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 	c := &SignConfig{}
 	jsonFile, err := os.ReadFile(filaPath)
@@ -71,47 +65,7 @@ func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 
 const signProtocol = "/sign/1.0.0"
 
-
-func ValidateToken(url string, token string, idx string) bool {
-	client := &http.Client{}
-	auth := fmt.Sprintf("%s/2.0/token", url)
-	req, err := http.NewRequest("GET", auth, nil)
-	if err != nil {
-		logger.Error("HTTP Request Creation Error", map[string]string{"err": err.Error()})
-		return false
-	}
-	req.Header.Add("accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.Error("HTTP Request Error", map[string]string{"err": err.Error()})
-		return false
-	}
-
-	defer resp.Body.Close()
-	fmt.Println("Response Code:", resp.Status)
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Error("Read Response Body Error", map[string]string{"err": err.Error()})
-	}
-
-	var user User
-	err = json.Unmarshal(body, &user)
-	if err != nil {
-		logger.Error("JSON Unmarshal Error", map[string]string{"err": err.Error()})
-	}
-
-	if user.Idx != idx {
-		logger.Error("Invalid Wallet Error", map[string]string{})
-		return false
-	}else {
-		return true
-	}
-}
-
-func Sign(path SignConfig, port string, jwt string, msg string) {
-	logger.Info("Sign started", map[string]string{})
+func Sign(path SignConfig, port string, jwt string, msg string, url string, companyIdx int, walletIdx int) {
 	config := path
 	config.Port, _ = strconv.ParseInt(port, 10, 64)
 	config.Message = msg
@@ -135,7 +89,7 @@ func Sign(path SignConfig, port string, jwt string, msg string) {
 	}
 	message, _ := hex.DecodeString(msg)
 	l := node.NewListener()
-	service, err := signer.NewSign(2, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, message, jwt, pm, l)
+	service, err := signer.NewSign(2, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, message, jwt, url, companyIdx, walletIdx, pm, l)
 	if err != nil {
 		logger.Error("Cannot create a new sign", map[string]string{"err": err.Error()})
 	}
@@ -169,15 +123,16 @@ func Sign(path SignConfig, port string, jwt string, msg string) {
 }
 
 func main() {
-	var path, port, msg, token string
-	// var url, idx string
+	var path, port, msg, token, url string
+	var companyIdx, walletIdx int
 
 	flag.StringVar(&path, "path", "", "filepath")
 	flag.StringVar(&port, "port", "10003", "port")
 	flag.StringVar(&msg, "msg", "1234", "message")
 	flag.StringVar(&token, "token", "", "JWTtoken")
-	// flag.StringVar(&url, "url", "", "authUrl")
-	// flag.StringVar(&idx, "idx", "", "walletIdx")
+	flag.StringVar(&url, "url", "", "authUrl")
+	flag.IntVar(&companyIdx, "companyIdx", 0, "companyIdx")
+	flag.IntVar(&walletIdx, "walletIdx", 0, "walletIdx")
 	flag.Parse()
 	
 	var key SignConfig
@@ -185,5 +140,5 @@ func main() {
 	if err != nil {
 		logger.Error("JSON Parse Error", map[string]string{"err": err.Error()})
 	}
-	Sign(key, port, token, msg)
+	Sign(key, port, token, msg, url, companyIdx, walletIdx)
 }
