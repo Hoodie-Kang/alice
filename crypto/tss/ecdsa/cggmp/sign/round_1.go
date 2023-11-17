@@ -117,7 +117,7 @@ type Wallet struct {
 	TokenInstance tokenInstance `json:"tokenInstance"`
 }
 
-func newRound1Handler(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, msg []byte, jwt string, url string, companyIdx int, walletIdx int, peerManager types.PeerManager) (*round1Handler, error) {
+func newRound1Handler(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, msg []byte, url string, companyIdx int, walletIdx int, peerManager types.PeerManager) (*round1Handler, error) {
 	curveN := pubKey.GetCurve().Params().N
 	// Establish BK Coefficient:
 	selfId := peerManager.SelfID()
@@ -183,7 +183,6 @@ func newRound1Handler(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.
 		paillierKey:     paillierKey,
 		bkpartialPubKey: own.partialPubKey.ScalarMult(own.bkcoefficient),
 		msg:             msg,
-		jwt:             jwt,
 		url:	         url,
 		companyIdx:      companyIdx,
 		walletIdx:       walletIdx,
@@ -294,7 +293,7 @@ func (p *round1Handler) HandleMessage(logg log.Logger, message types.Message) er
 		logger.Error("Public key mismatch", map[string]string{"pubkey": p.pubKey.String(), "peerPubkey": peerPubkey.String()})
 		return errors.New("Public key mismatch")
 	}
-	p.msg = round1.Plaintext
+
 	p.jwt = round1.Jwt
 	if !ValidateToken(p.url, p.jwt, p.companyIdx, p.walletIdx) {
 		return errors.New("JWT token validation error")
@@ -396,7 +395,6 @@ func (p *round1Handler) sendRound1Messages() error {
 					KCiphertext:     p.kCiphertext.Bytes(),
 					GammaCiphertext: p.gammaCiphertext.Bytes(),
 					Plaintext:       p.msg,
-					Jwt:             p.jwt,
 					Pubkey:          pubkey,
 					Psi:             psi,
 				},

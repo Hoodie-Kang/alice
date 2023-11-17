@@ -65,7 +65,7 @@ func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 
 const signProtocol = "/sign/1.0.0"
 
-func Sign(path SignConfig, port string, jwt string, msg string, url string, companyIdx int, walletIdx int) {
+func Sign(path SignConfig, port string, msg string, url string, companyIdx int, walletIdx int) {
 	config := path
 	config.Port, _ = strconv.ParseInt(port, 10, 64)
 	config.Message = msg
@@ -89,7 +89,7 @@ func Sign(path SignConfig, port string, jwt string, msg string, url string, comp
 	}
 	message, _ := hex.DecodeString(msg)
 	l := node.NewListener()
-	service, err := signer.NewSign(2, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, message, jwt, url, companyIdx, walletIdx, pm, l)
+	service, err := signer.NewSign(2, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, message, url, companyIdx, walletIdx, pm, l)
 	if err != nil {
 		logger.Error("Cannot create a new sign", map[string]string{"err": err.Error()})
 	}
@@ -123,13 +123,12 @@ func Sign(path SignConfig, port string, jwt string, msg string, url string, comp
 }
 
 func main() {
-	var path, port, msg, token, url string
+	var path, port, msg, url string
 	var companyIdx, walletIdx int
 
 	flag.StringVar(&path, "path", "", "filepath")
 	flag.StringVar(&port, "port", "10003", "port")
-	flag.StringVar(&msg, "msg", "1234", "message")
-	flag.StringVar(&token, "token", "", "JWTtoken")
+	flag.StringVar(&msg, "msg", "", "message")
 	flag.StringVar(&url, "url", "", "authUrl")
 	flag.IntVar(&companyIdx, "companyIdx", 0, "companyIdx")
 	flag.IntVar(&walletIdx, "walletIdx", 0, "walletIdx")
@@ -140,5 +139,5 @@ func main() {
 	if err != nil {
 		logger.Error("JSON Parse Error", map[string]string{"err": err.Error()})
 	}
-	Sign(key, port, token, msg, url, companyIdx, walletIdx)
+	Sign(key, port, msg, url, companyIdx, walletIdx)
 }
