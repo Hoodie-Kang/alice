@@ -15,12 +15,8 @@
 package sign
 
 import (
-	"encoding/json"
 	"errors"
-	"io"
 	"math/big"
-	"net/http"
-	"strconv"
 
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	pt "github.com/getamis/alice/crypto/ecpointgrouplaw"
@@ -70,9 +66,6 @@ type round1Handler struct {
 	bkpartialPubKey *pt.ECPoint
 	msg             []byte
 	jwt             string
-	url             string
-	companyIdx      int
-	walletIdx       int
 
 	delta    *big.Int
 	chi      *big.Int
@@ -97,27 +90,7 @@ type round1Handler struct {
 	own         *peer
 }
 
-type company struct {
-	Idx int
-}
-
-type wallet struct {
-	Idx int
-}
-type tokenBody struct {
-	TokenType string `json:"tokenType"`
-}
-
-type tokenInstance struct {
-	Company company `json:"company"`
-	Wallet  wallet  `json:"wallet"`
-}
-type Wallet struct {
-	TokenBody     tokenBody     `json:"tokenBody"`
-	TokenInstance tokenInstance `json:"tokenInstance"`
-}
-
-func newRound1Handler(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, msg []byte, jwt string, url string, companyIdx int, walletIdx int, peerManager types.PeerManager) (*round1Handler, error) {
+func newRound1Handler(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, jwt string, peerManager types.PeerManager) (*round1Handler, error) {
 	curveN := pubKey.GetCurve().Params().N
 	// Establish BK Coefficient:
 	selfId := peerManager.SelfID()
@@ -182,11 +155,7 @@ func newRound1Handler(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.
 		pubKey:          pubKey,
 		paillierKey:     paillierKey,
 		bkpartialPubKey: own.partialPubKey.ScalarMult(own.bkcoefficient),
-		msg:             msg,
 		jwt:             jwt,
-		url:	         url,
-		companyIdx:      companyIdx,
-		walletIdx:       walletIdx,
 
 		k:               k,
 		rho:             rho,
@@ -222,59 +191,6 @@ func (p *round1Handler) IsHandled(logg log.Logger, id string) bool {
 	return peer.Messages[p.MessageType()] != nil
 }
 
-func ValidateToken(url string, token string, companyIdx int, walletIdx int) bool {
-	client := &http.Client{}
-	req, err := http.NewRequest("GET", url, nil)
-	if err != nil {
-		logger.Error("HTTP Request Creation Error", map[string]string{"err": err.Error()})
-		return false
-	}
-	req.Header.Add("accept", "application/json")
-	req.Header.Set("Authorization", "Bearer "+token)
-	resp, err := client.Do(req)
-	if err != nil {
-		logger.Error("HTTP Request Error", map[string]string{"err": err.Error()})
-		return false
-	}
-
-	defer resp.Body.Close()
-	if resp.StatusCode != 200 {
-		logger.Error("HTTP Responce Error", map[string]string{"status": resp.Status})
-		return false
-	}
-
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		logger.Error("Read Response Body Error", map[string]string{"err": err.Error()})
-	}
-
-	var wallet Wallet
-	err = json.Unmarshal(body, &wallet)
-	if err != nil {
-		logger.Error("JSON Unmarshal Error", map[string]string{"err": err.Error()})
-	}
-
-	if wallet.TokenBody.TokenType == "COMPANY" {
-		if wallet.TokenInstance.Company.Idx == companyIdx {
-			logger.Info("Valid Company Token", map[string]string{})
-			return true
-		} else {
-			logger.Error("Invalid Company Token", map[string]string{"companyIdx": strconv.Itoa(wallet.TokenInstance.Company.Idx)})
-			return false
-		}
-	} else if wallet.TokenBody.TokenType == "WALLET" {
-		if wallet.TokenInstance.Wallet.Idx == walletIdx {
-			logger.Info("Valid Wallet Token", map[string]string{})
-			return true
-		}else {
-			logger.Error("Invalid Wallet Token", map[string]string{"walletIdx": strconv.Itoa(wallet.TokenInstance.Wallet.Idx)})
-			return false
-		}
-	} else {
-		logger.Error("Invalid Token Type", map[string]string{"type": wallet.TokenBody.TokenType})
-		return false
-	}
-}
 
 func (p *round1Handler) HandleMessage(logg log.Logger, message types.Message) error {
 	msg := getMessage(message)
@@ -294,11 +210,8 @@ func (p *round1Handler) HandleMessage(logg log.Logger, message types.Message) er
 		logger.Error("Public key mismatch", map[string]string{"pubkey": p.pubKey.String(), "peerPubkey": peerPubkey.String()})
 		return errors.New("Public key mismatch")
 	}
+	// Client receive only message
 	p.msg = round1.Plaintext
-	p.jwt = round1.Jwt
-	if !ValidateToken(p.url, p.jwt, p.companyIdx, p.walletIdx) {
-		return errors.New("JWT token validation error")
-	}
 	// verify Proof_enc
 	err := round1.Psi.Verify(parameter, p.own.ssidWithBk, round1.KCiphertext, n, ownPed)
 	if err != nil {
@@ -395,7 +308,6 @@ func (p *round1Handler) sendRound1Messages() error {
 				Round1: &Round1Msg{
 					KCiphertext:     p.kCiphertext.Bytes(),
 					GammaCiphertext: p.gammaCiphertext.Bytes(),
-					Plaintext:       p.msg,
 					Jwt:             p.jwt,
 					Pubkey:          pubkey,
 					Psi:             psi,

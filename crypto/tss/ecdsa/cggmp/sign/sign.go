@@ -38,9 +38,9 @@ type Result struct {
 	V uint
 }
 
-func NewSign(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, msg []byte, jwt string, url string, companyIdx int, walletIdx int, peerManager types.PeerManager, listener types.StateChangedListener) (*Sign, error) {
+func NewSign(threshold uint32, ssid []byte, share *big.Int, pubKey *pt.ECPoint, partialPubKey map[string]*pt.ECPoint, paillierKey *paillier.Paillier, ped map[string]*paillierzkproof.PederssenOpenParameter, bks map[string]*birkhoffinterpolation.BkParameter, jwt string, peerManager types.PeerManager, listener types.StateChangedListener) (*Sign, error) {
 	peerNum := peerManager.NumPeers()
-	ph, err := newRound1Handler(threshold, ssid, share, pubKey, partialPubKey, paillierKey, ped, bks, msg, jwt, url, companyIdx, walletIdx, peerManager)
+	ph, err := newRound1Handler(threshold, ssid, share, pubKey, partialPubKey, paillierKey, ped, bks, jwt, peerManager)
 	if err != nil {
 		return nil, err
 	}

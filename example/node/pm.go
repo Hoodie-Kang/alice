@@ -137,6 +137,7 @@ func (p *peerManager) EnsureAllConnected() {
 		if ctx.Err() == context.DeadlineExceeded {
 			fmt.Println("Connection Timeout")
 			logger.Error("Connection Timeout", map[string]string{"err": err.Error()})
+			return ctx.Err()
 		}
 		// Connect the host to the peer.
 		err = host.Connect(ctx, *info)
@@ -168,7 +169,7 @@ func (p *peerManager) EnsureAllConnected() {
 
 		go func() {
 			defer wg.Done()
-			deadline := time.Now().Add(5 * time.Second)
+			deadline := time.Now().Add(10 * time.Second)
 			for {
 				// Connect the host to the peer. with timeout
 				ctx, cancel := context.WithDeadline(context.Background(), deadline)
