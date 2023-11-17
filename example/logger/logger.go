@@ -31,7 +31,7 @@ func init() {
 	encoderConfig.StacktraceKey = ""
 	config.EncoderConfig = encoderConfig
 	config.OutputPaths = []string {
-		"stdout",
+		// "stdout",
 		path,
 	}
 	config.ErrorOutputPaths = []string {

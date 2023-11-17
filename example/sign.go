@@ -16,10 +16,11 @@ package main
 import (
 	"encoding/hex"
 	"encoding/json"
-	"net/http"
+	"flag"
 	"fmt"
-	"os"
 	"io"
+	"net/http"
+	"os"
 	"strconv"
 
 	signer "github.com/getamis/alice/crypto/tss/ecdsa/cggmp/sign"
@@ -76,7 +77,6 @@ func ValidateToken(url string, token string, idx string) bool {
 	auth := fmt.Sprintf("%s/2.0/token", url)
 	req, err := http.NewRequest("GET", auth, nil)
 	if err != nil {
-		fmt.Println("HTTP Request Creation Error", err)
 		logger.Error("HTTP Request Creation Error", map[string]string{"err": err.Error()})
 		return false
 	}
@@ -84,7 +84,6 @@ func ValidateToken(url string, token string, idx string) bool {
 	req.Header.Set("Authorization", "Bearer "+token)
 	resp, err := client.Do(req)
 	if err != nil {
-		fmt.Println("HTTP Request Error:", err)
 		logger.Error("HTTP Request Error", map[string]string{"err": err.Error()})
 		return false
 	}
@@ -94,35 +93,26 @@ func ValidateToken(url string, token string, idx string) bool {
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		fmt.Println("Read Response Body Error:", err)
 		logger.Error("Read Response Body Error", map[string]string{"err": err.Error()})
 	}
 
 	var user User
 	err = json.Unmarshal(body, &user)
 	if err != nil {
-		fmt.Println("JSON Unmarshal Error:", err)
 		logger.Error("JSON Unmarshal Error", map[string]string{"err": err.Error()})
 	}
 
-	fmt.Println(user)
-	fmt.Println(user.Idx)
-
 	if user.Idx != idx {
-		fmt.Println("Invalid Wallet Error")
+		logger.Error("Invalid Wallet Error", map[string]string{})
 		return false
 	}else {
 		return true
 	}
 }
 
-func Sign(path string, port string, jwt string, msg string) {
+func Sign(path SignConfig, port string, jwt string, msg string) {
 	logger.Info("Sign started", map[string]string{})
-	config, err := ReadSignConfigFile(path)
-	if err != nil {
-		logger.Panic("Failed to read key file", map[string]string{"err": err.Error(), "path": path})
-	}
-
+	config := path
 	config.Port, _ = strconv.ParseInt(port, 10, 64)
 	config.Message = msg
 
@@ -145,7 +135,7 @@ func Sign(path string, port string, jwt string, msg string) {
 	}
 	message, _ := hex.DecodeString(msg)
 	l := node.NewListener()
-	service, err := signer.NewSign(config.Threshold, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, message, jwt, pm, l)
+	service, err := signer.NewSign(2, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, message, jwt, pm, l)
 	if err != nil {
 		logger.Error("Cannot create a new sign", map[string]string{"err": err.Error()})
 	}
@@ -164,12 +154,12 @@ func Sign(path string, port string, jwt string, msg string) {
 	host.Network().Notify(&network.NotifyBundle{
 		DisconnectedF: func(network.Network, network.Conn) {
 			fmt.Println("Connection was closed, reconnect")
+			logger.Info("Connection was closed, reconnect", map[string]string{})
 		},
 	})
 
 	// Ensure all peers are connected before starting sign process.
 	pm.EnsureAllConnected()
-
 	// Start sign process.
 	result, err := node.Process()
 	if err != nil {
@@ -179,9 +169,21 @@ func Sign(path string, port string, jwt string, msg string) {
 }
 
 func main() {
-	// path := os.Getenv("file_path")
-	// port := os.Getenv("port")
-	// jwt := os.Getenv("jwt")
-	// msg := os.Getenv("msg")
-	// Sign(path, port, jwt, msg)
+	var path, port, msg, token string
+	// var url, idx string
+
+	flag.StringVar(&path, "path", "", "filepath")
+	flag.StringVar(&port, "port", "10003", "port")
+	flag.StringVar(&msg, "msg", "1234", "message")
+	flag.StringVar(&token, "token", "", "JWTtoken")
+	// flag.StringVar(&url, "url", "", "authUrl")
+	// flag.StringVar(&idx, "idx", "", "walletIdx")
+	flag.Parse()
+	
+	var key SignConfig
+	err := json.Unmarshal([]byte(path), &key)
+	if err != nil {
+		logger.Error("JSON Parse Error", map[string]string{"err": err.Error()})
+	}
+	Sign(key, port, token, msg)
 }

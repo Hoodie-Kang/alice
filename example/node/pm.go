@@ -18,6 +18,7 @@ import (
 	"context"
 	"sync"
 	"time"
+	"fmt"
 
 	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/alice/example/utils"
@@ -133,6 +134,10 @@ func (p *peerManager) EnsureAllConnected() {
 			return err
 		}
 
+		if ctx.Err() == context.DeadlineExceeded {
+			fmt.Println("Connection Timeout")
+			logger.Error("Connection Timeout", map[string]string{"err": err.Error()})
+		}
 		// Connect the host to the peer.
 		err = host.Connect(ctx, *info)
 		if err != nil {
@@ -163,10 +168,10 @@ func (p *peerManager) EnsureAllConnected() {
 
 		go func() {
 			defer wg.Done()
-
+			deadline := time.Now().Add(5 * time.Second)
 			for {
 				// Connect the host to the peer. with timeout
-				ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+				ctx, cancel := context.WithDeadline(context.Background(), deadline)
 				defer cancel()
 				err := connect(ctx, p.host, addr)
 				if err != nil {
