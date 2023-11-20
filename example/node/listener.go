@@ -34,7 +34,7 @@ func (l *listener) OnStateChanged(oldState types.MainState, newState types.MainS
 		return
 	}
 	
-	logger.Debug("State changed", map[string]string{"old": oldState.String(), "new": newState.String()})
+	logger.Info("State changed", map[string]string{"old": oldState.String(), "new": newState.String()})
 }
 
 func (l *listener) Done() <-chan error {

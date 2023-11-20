@@ -77,12 +77,12 @@ func (p *round3Handler) HandleMessage(logg log.Logger, message types.Message) er
 	ownPed := p.own.para
 	Delta, err := round3.BigDelta.ToPoint()
 	if err != nil {
-		logger.Debug("Failed to ToPoint", map[string]string{"err": err.Error()})
+		logger.Warn("Failed to ToPoint", map[string]string{"err": err.Error()})
 		return err
 	}
 	err = round3.Psidoublepai.Verify(parameter, peer.ssidWithBk, peer.round1Data.kCiphertext, peer.para.GetN(), ownPed, Delta, p.sumGamma)
 	if err != nil {
-		logger.Debug("Failed to Verify", map[string]string{"err": err.Error()})
+		logger.Warn("Failed to Verify", map[string]string{"err": err.Error()})
 		return err
 	}
 
@@ -103,14 +103,14 @@ func (p *round3Handler) Finalize(logg log.Logger) (types.Handler, error) {
 		round3 := getMessage(peer.GetMessage(types.MessageType(Type_Round3))).GetRound3()
 		Delta, err := round3.BigDelta.ToPoint()
 		if err != nil {
-			logger.Debug("Failed to ToPoint", map[string]string{"err": err.Error()})
+			logger.Warn("Failed to ToPoint", map[string]string{"err": err.Error()})
 			return nil, err
 		}
 
 		delta.Add(delta, peer.round3Data.delta)
 		bigDelta, err = bigDelta.Add(Delta)
 		if err != nil {
-			logger.Debug("Failed to Add", map[string]string{"err": err.Error()})
+			logger.Warn("Failed to Add", map[string]string{"err": err.Error()})
 			return nil, err
 		}
 	}
@@ -126,7 +126,7 @@ func (p *round3Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	}
 	R := p.sumGamma.ScalarMult(new(big.Int).ModInverse(delta, curveN))
 	if R.IsIdentity() {
-		logger.Debug("Identity point", map[string]string{})
+		logger.Warn("Identity point", map[string]string{})
 		return nil, ErrZeroR
 	}
 	r := R.GetX()

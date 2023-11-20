@@ -69,6 +69,7 @@ func Sign(path SignConfig, port string, msg string, url string, companyIdx int, 
 	config := path
 	config.Port, _ = strconv.ParseInt(port, 10, 64)
 	config.Message = msg
+	logger.Info("Signer Started", map[string]string{})
 
 	// Make a host that listens on the given multiaddress.
 	host, err := node.MakeBasicHost(config.Port)

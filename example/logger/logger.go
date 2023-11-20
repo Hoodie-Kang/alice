@@ -73,14 +73,6 @@ func Warn(message string, args map[string]string) {
 	logger.Warn(message, fields...)
 }
 
-func Debug(message string, args map[string]string) {
-	var fields []zapcore.Field
-	for str, val := range args {
-		fields = append(fields, zap.String(str, val))
-	} 
-	logger.Debug(message, fields...)
-}
-
 func Error(message string, args map[string]string) {
 	var fields []zapcore.Field
 	for str, val := range args {
@@ -88,18 +80,4 @@ func Error(message string, args map[string]string) {
 	} 
 	logger.Error(message, fields...)
 	os.Exit(1)
-}
-
-func Panic(message string, args map[string]string) {
-	var fields []zapcore.Field
-	for str, val := range args {
-		fields = append(fields, zap.String(str, val))
-	}
-	logger.Panic(message, fields...)
-}
-
-func Fatal(message string, err string) {
-	logger.Fatal(message,
-		zap.String("err", err),
-	)
 }
