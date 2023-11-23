@@ -63,23 +63,22 @@ func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 }
 
 const signProtocol = "/sign/1.0.0"
+const ServerPort = "10003"
+const ServerIP = "127.0.0.1"
 
-func Sign(path SignConfig, port string, jwt string) {
+func Sign(path SignConfig, ip string, port string, jwt string) {
 	config := path
-	config.Port, _ = strconv.ParseInt(port, 10, 64)
+	// config.Port, _ = strconv.ParseInt(port, 10, 64)
 
 	// Make a host that listens on the given multiaddress.
-	host, err := node.MakeBasicHost(config.Port)
+	host, err := node.MakeBasicHost(ip, port)
 	if err != nil {
 		logger.Error("Failed to create a basic host", map[string]string{"err": err.Error()})
 	}
 
 	// Create a new peer manager.
-	pm := node.NewPeerManager(utils.GetPeerIDFromPort(config.Port), host, signProtocol)
-	err = pm.AddPeers(config.Peers)
-	if err != nil {
-		logger.Error("Failed to add peers", map[string]string{"err": err.Error()})
-	}
+	pm := node.NewPeerManager("User", host, signProtocol)
+	pm.AddPeer(ServerIP, ServerPort)
 
 	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.PaillierKey, config.Ped, config.BKs)
 	if err != nil {
@@ -120,17 +119,18 @@ func Sign(path SignConfig, port string, jwt string) {
 }
 
 func main() {
-	var path, port, token string
+	var data, ip, port, token string
 
-	flag.StringVar(&path, "path", "", "filepath")
-	flag.StringVar(&port, "port", "10003", "port")
+	flag.StringVar(&data, "data", "", "fileData")
+	flag.StringVar(&ip, "ip", "", "clientIP")
+	flag.StringVar(&port, "port", "", "clientPort")
 	flag.StringVar(&token, "token", "", "JWTtoken")
 	flag.Parse()
 	
 	var key SignConfig
-	err := json.Unmarshal([]byte(path), &key)
+	err := json.Unmarshal([]byte(data), &key)
 	if err != nil {
 		logger.Error("JSON Parse Error", map[string]string{"err": err.Error()})
 	}
-	Sign(key, port, token)
+	Sign(key, ip, port, token)
 }
