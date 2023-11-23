@@ -57,7 +57,7 @@ func (n *node[M, R]) Handle(s network.Stream) {
 		return
 	}
 
-	logger.Info("Received request", map[string]string{"from": s.Conn().RemotePeer().String()})
+	// logger.Info("Received request", map[string]string{"from": s.Conn().RemotePeer().String()})
 	err = n.backend.AddMessage(data.GetId(), data)
 	if err != nil {
 		logger.Error("Cannot add message", map[string]string{"err": err.Error()})

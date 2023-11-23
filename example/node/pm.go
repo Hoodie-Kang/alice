@@ -20,7 +20,6 @@ import (
 	"time"
 
 	"github.com/getamis/alice/example/logger"
-	"github.com/getamis/alice/example/utils"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
@@ -184,10 +183,11 @@ func (p *peerManager) AddPeer(peerId string, peerAddr string) {
 }
 
 // AddPeers adds peers to peer list.
-func (p *peerManager) AddPeers(peerPorts []int64) error {
-	for _, peerPort := range peerPorts {
-		peerID := utils.GetPeerIDFromPort(peerPort)
-		peerAddr, err := getPeerAddr(peerPort)
+func (p *peerManager) AddPeers(peerPorts []int64, peerIPs []string) error {
+	for i, peerPort := range peerPorts {
+		// peer 는 User self(host)는 Octet
+		peerID := "User"
+		peerAddr, err := GetPeerAddr(peerIPs[i], peerPort)
 		if err != nil {
 			logger.Error("Cannot get peer address", map[string]string{"peerID": peerID, "err": err.Error()})
 			return err

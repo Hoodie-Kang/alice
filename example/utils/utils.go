@@ -15,7 +15,6 @@ package utils
 
 import (
 	"errors"
-	"fmt"
 	"math/big"
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
@@ -42,18 +41,6 @@ var (
 	// ErrConversion for big int conversion error
 	ErrConversion = errors.New("conversion error")
 )
-
-// GetPeerIDFromPort gets peer ID from port.
-func GetPeerIDFromPort(port int64) string {
-	// For convenience, we set peer ID as "id-" + port
-	// 지금은 sign 에서만 필요 .. refresh 수정필요
-	if port % 2 == 1 {
-		return "Octet"	
-	} else if port % 2 == 0 {
-		return "User"
-	}
-	return fmt.Sprintf("id-%d", port)
-}
 
 // GetCurve returns the curve we used in this example.
 func GetCurve() elliptic.Curve {

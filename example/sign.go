@@ -64,22 +64,26 @@ func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 }
 
 const signProtocol = "/sign/1.0.0"
+const ServerPort = "10003"
+const ServerIP = "127.0.0.1"
 
-func Sign(path SignConfig, port string, msg string, url string, companyIdx int, walletIdx int) {
+func Sign(path SignConfig, port int, msg string, url string, companyIdx int, walletIdx int, ip string) {
 	config := path
-	config.Port, _ = strconv.ParseInt(port, 10, 64)
+	clientPort := int64(port)
+	config.Peers = []int64{clientPort}
+	peerIPs := []string{ip}
 	config.Message = msg
 	logger.Info("Signer Started", map[string]string{})
 
 	// Make a host that listens on the given multiaddress.
-	host, err := node.MakeBasicHost(config.Port)
+	host, err := node.MakeBasicHost(ServerIP, ServerPort)
 	if err != nil {
 		logger.Error("Failed to create a basic host", map[string]string{"err": err.Error()})
 	}
 
 	// Create a new peer manager.
-	pm := node.NewPeerManager(utils.GetPeerIDFromPort(config.Port), host, signProtocol)
-	err = pm.AddPeers(config.Peers)
+	pm := node.NewPeerManager("Octet", host, signProtocol)
+	err = pm.AddPeers(config.Peers, peerIPs)
 	if err != nil {
 		logger.Error("Failed to add peers", map[string]string{"err": err.Error()})
 	}
@@ -124,21 +128,22 @@ func Sign(path SignConfig, port string, msg string, url string, companyIdx int, 
 }
 
 func main() {
-	var path, port, msg, url string
-	var companyIdx, walletIdx int
+	var data, msg, url, ip string
+	var port, companyIdx, walletIdx int
 
-	flag.StringVar(&path, "path", "", "filepath")
-	flag.StringVar(&port, "port", "10003", "port")
+	flag.StringVar(&data, "data", "", "fileData")
 	flag.StringVar(&msg, "msg", "", "message")
 	flag.StringVar(&url, "url", "", "authUrl")
+	flag.StringVar(&ip, "ip", "", "clientIP")
+	flag.IntVar(&port, "port", 0, "clientPort")
 	flag.IntVar(&companyIdx, "companyIdx", 0, "companyIdx")
 	flag.IntVar(&walletIdx, "walletIdx", 0, "walletIdx")
 	flag.Parse()
-	
+
 	var key SignConfig
-	err := json.Unmarshal([]byte(path), &key)
+	err := json.Unmarshal([]byte(data), &key)
 	if err != nil {
 		logger.Error("JSON Parse Error", map[string]string{"err": err.Error()})
 	}
-	Sign(key, port, msg, url, companyIdx, walletIdx)
+	Sign(key, port, msg, url, companyIdx, walletIdx, ip)
 }

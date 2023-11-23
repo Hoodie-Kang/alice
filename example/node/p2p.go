@@ -16,6 +16,9 @@ package node
 import (
 	"fmt"
 	"math/rand"
+	"strconv"
+	"strings"
+	"encoding/binary"
 
 	"github.com/libp2p/go-libp2p"
 	"github.com/libp2p/go-libp2p/core/crypto"
@@ -25,14 +28,13 @@ import (
 )
 
 // MakeBasicHost creates a LibP2P host.
-func MakeBasicHost(port int64) (host.Host, error) {
-	// sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
-	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", port))
+func MakeBasicHost(ip string, port string) (host.Host, error) {
+	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%s", ip, port))
 	if err != nil {
 		return nil, err
 	}
-
-	priv, err := generateIdentity(port)
+	src := Source(ip, port)
+	priv, err := generateIdentity(src)
 	if err != nil {
 		return nil, err
 	}
@@ -50,14 +52,29 @@ func MakeBasicHost(port int64) (host.Host, error) {
 	return basicHost, nil
 }
 
-// getPeerAddr gets peer full address from port.
-func GetPeerAddr(port int64, peerId string) string {
-	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", port, peerId)
+func Source(ip string, port string) int64 {
+	var byteArray []byte
+	s := strings.Split(ip, ".")
+	formattedPort := fmt.Sprintf("%06s", port)
+
+	for _, i := range s {
+		intI, _ := strconv.Atoi(i)
+		byteArray = append(byteArray, byte(intI))
+	}
+	byteArray = append(byteArray, 0)
+	for i := 0; i < len(formattedPort); i += 2 {
+		// 두 글자씩 나눠서 바이트로 변환
+		intP, _ := strconv.Atoi(formattedPort[i : i+2])
+		bytes := byte(intP)
+		// 바이트 배열에 추가
+		byteArray = append(byteArray, bytes)
+    }
+	return int64(binary.BigEndian.Uint64(byteArray))
 }
 
-// getPeerAddr gets peer full address from port.
-func getPeerAddr(port int64) (string, error) {
-	priv, err := generateIdentity(port)
+func GetPeerAddr(ip string, port int64) (string, error) {
+	p := Source(ip, strconv.Itoa(int(port)))
+	priv, err := generateIdentity(p)
 	if err != nil {
 		return "", err
 	}
@@ -67,13 +84,12 @@ func getPeerAddr(port int64) (string, error) {
 		return "", err
 	}
 
-	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", port, pid), nil
+	return fmt.Sprintf("/ip4/%s/tcp/%d/p2p/%s", ip, port, pid), nil
 }
-// Fix me: generateIdentity generates a fixed key pair by using "something(tss 대표지갑 인덱스)" as random source.
-func generateIdentity(port int64) (crypto.PrivKey, error) {
-	// Use the port as the randomness source in this example.
-	// #nosec: G404: Use of weak random number generator (math/rand instead of crypto/rand)
-	r := rand.New(rand.NewSource(port))
+
+func generateIdentity(src int64) (crypto.PrivKey, error) {
+	// Use IP+Port as byte array
+	r := rand.New(rand.NewSource(src))
 
 	// Generate a key pair for this host.
 	priv, _, err := crypto.GenerateKeyPairWithReader(crypto.ECDSA, 2048, r)
