@@ -15,7 +15,6 @@ package main
 
 import (
 	"encoding/json"
-	"flag"
 	"fmt"
 	"os"
 	"strconv"
@@ -66,9 +65,11 @@ const signProtocol = "/sign/1.0.0"
 const ServerPort = "10003"
 const ServerIP = "127.0.0.1"
 
-func Sign(path SignConfig, ip string, port string, jwt string) {
-	config := path
-	// config.Port, _ = strconv.ParseInt(port, 10, 64)
+func Sign(path string, ip string, port string, jwt string) {
+	config, err := ReadSignConfigFile(path)
+	if err != nil {
+		logger.Error("Failed to read key file", map[string]string{"err": err.Error(), "path": path})
+	}
 
 	// Make a host that listens on the given multiaddress.
 	host, err := node.MakeBasicHost(ip, port)
@@ -119,18 +120,10 @@ func Sign(path SignConfig, ip string, port string, jwt string) {
 }
 
 func main() {
-	var data, ip, port, token string
+	path := os.Getenv("FILE_PATH")
+	ip := os.Getenv("IP")
+	port := os.Getenv("PORT")
+	token := os.Getenv("JWT")
 
-	flag.StringVar(&data, "data", "", "fileData")
-	flag.StringVar(&ip, "ip", "", "clientIP")
-	flag.StringVar(&port, "port", "", "clientPort")
-	flag.StringVar(&token, "token", "", "JWTtoken")
-	flag.Parse()
-	
-	var key SignConfig
-	err := json.Unmarshal([]byte(data), &key)
-	if err != nil {
-		logger.Error("JSON Parse Error", map[string]string{"err": err.Error()})
-	}
-	Sign(key, ip, port, token)
+	Sign(path, ip, port, token)
 }
