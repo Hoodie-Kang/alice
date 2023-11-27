@@ -64,19 +64,16 @@ func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 }
 
 const signProtocol = "/sign/1.0.0"
-const ServerPort = "10003"
-const ServerIP = "127.0.0.1"
 
-func Sign(path SignConfig, port int, msg string, url string, companyIdx int, walletIdx int, ip string) {
+func Sign(path SignConfig, clientIP string, serverIP string, clientPort int, serverPort string, msg string, url string, companyIdx int, walletIdx int) {
 	config := path
-	clientPort := int64(port)
-	config.Peers = []int64{clientPort}
-	peerIPs := []string{ip}
+	config.Peers = []int64{int64(clientPort)}
+	peerIPs := []string{clientIP}
 	config.Message = msg
 	logger.Info("Signer Started", map[string]string{})
 
 	// Make a host that listens on the given multiaddress.
-	host, err := node.MakeBasicHost(ServerIP, ServerPort)
+	host, err := node.MakeBasicHost(serverIP, serverPort)
 	if err != nil {
 		logger.Error("Failed to create a basic host", map[string]string{"err": err.Error()})
 	}
@@ -112,8 +109,8 @@ func Sign(path SignConfig, port int, msg string, url string, companyIdx int, wal
 	// 연결 끊김 이벤트 핸들러 등록
 	host.Network().Notify(&network.NotifyBundle{
 		DisconnectedF: func(network.Network, network.Conn) {
-			fmt.Println("Connection was closed, reconnect")
-			logger.Info("Connection was closed, reconnect", map[string]string{})
+			fmt.Println("Connection was closed, Restart")
+			logger.Error("Connection was closed, Restart", map[string]string{})
 		},
 	})
 
@@ -128,22 +125,28 @@ func Sign(path SignConfig, port int, msg string, url string, companyIdx int, wal
 }
 
 func main() {
-	var data, msg, url, ip string
-	var port, companyIdx, walletIdx int
+	var data, msg, url, clientIP, serverIP, serverPort string
+	var clientPort, companyIdx, walletIdx int
 
 	flag.StringVar(&data, "data", "", "fileData")
 	flag.StringVar(&msg, "msg", "", "message")
 	flag.StringVar(&url, "url", "", "authUrl")
-	flag.StringVar(&ip, "ip", "", "clientIP")
-	flag.IntVar(&port, "port", 0, "clientPort")
-	flag.IntVar(&companyIdx, "companyIdx", 0, "companyIdx")
-	flag.IntVar(&walletIdx, "walletIdx", 0, "walletIdx")
+	flag.StringVar(&clientIP, "clientIp", "", "clientIP")
+	flag.StringVar(&serverIP, "serverIp", "", "serverIP")
+	flag.StringVar(&serverPort, "serverPort", "", "serverPort")
+
+	flag.IntVar(&clientPort, "clientPort", 0, "clientPort")
+	flag.IntVar(&companyIdx, "companyIdx", -1, "companyIdx")
+	flag.IntVar(&walletIdx, "walletIdx", -1, "walletIdx")
 	flag.Parse()
+
+	logger.CommonFields("InputCompanyIdx", strconv.Itoa(companyIdx))
+	logger.CommonFields("InputWalletIdx", strconv.Itoa(walletIdx))
 
 	var key SignConfig
 	err := json.Unmarshal([]byte(data), &key)
 	if err != nil {
 		logger.Error("JSON Parse Error", map[string]string{"err": err.Error()})
 	}
-	Sign(key, port, msg, url, companyIdx, walletIdx, ip)
+	Sign(key, clientIP, serverIP, clientPort, serverPort, msg, url, companyIdx, walletIdx)
 }

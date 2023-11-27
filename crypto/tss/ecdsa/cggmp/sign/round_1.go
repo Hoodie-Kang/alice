@@ -238,7 +238,7 @@ func ValidateToken(url string, token string, companyIdx int, walletIdx int) bool
 
 	defer resp.Body.Close()
 	if resp.StatusCode != 200 {
-		logger.Error("HTTP Responce Error", map[string]string{"status": resp.Status})
+		logger.Error("HTTP Response Error", map[string]string{"status": resp.Status})
 		return false
 	}
 
@@ -258,7 +258,7 @@ func ValidateToken(url string, token string, companyIdx int, walletIdx int) bool
 			logger.Info("Valid Company Token", map[string]string{})
 			return true
 		} else {
-			logger.Error("Invalid Company Token", map[string]string{"companyIdx": strconv.Itoa(wallet.TokenInstance.Company.Idx)})
+			logger.Error("Invalid Company Token", map[string]string{"TokenCompanyIdx": strconv.Itoa(wallet.TokenInstance.Company.Idx)})
 			return false
 		}
 	} else if wallet.TokenBody.TokenType == "WALLET" {
@@ -266,11 +266,11 @@ func ValidateToken(url string, token string, companyIdx int, walletIdx int) bool
 			logger.Info("Valid Wallet Token", map[string]string{})
 			return true
 		}else {
-			logger.Error("Invalid Wallet Token", map[string]string{"walletIdx": strconv.Itoa(wallet.TokenInstance.Wallet.Idx)})
+			logger.Error("Invalid Wallet Token", map[string]string{"TokenWalletIdx": strconv.Itoa(wallet.TokenInstance.Wallet.Idx)})
 			return false
 		}
 	} else {
-		logger.Error("Invalid Token Type", map[string]string{"type": wallet.TokenBody.TokenType})
+		logger.Error("Invalid Token Type", map[string]string{"TokenType": wallet.TokenBody.TokenType})
 		return false
 	}
 }

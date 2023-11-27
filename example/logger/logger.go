@@ -9,6 +9,11 @@ import (
 )
 
 var logger *zap.Logger
+var commonFields []zapcore.Field
+
+func CommonFields(field string, value string){
+	commonFields = append(commonFields, zap.String(field, value))
+}
 
 func init() {
 	var err error
@@ -24,8 +29,6 @@ func init() {
 
 	config := zap.NewProductionConfig()
 	encoderConfig := zap.NewProductionEncoderConfig()
-	// config := zap.NewDevelopmentConfig()
-	// encoderConfig := zap.NewDevelopmentEncoderConfig()
 	encoderConfig.TimeKey = "timestamp"
 	encoderConfig.EncodeTime = zapcore.ISO8601TimeEncoder
 	encoderConfig.StacktraceKey = ""
@@ -62,6 +65,7 @@ func Info(message string, args map[string]string) {
 	for str, val := range args {
 		fields = append(fields, zap.String(str, val))
 	} 
+	fields = append(fields, commonFields...) 
 	logger.Info(message, fields...)
 }
 
@@ -70,6 +74,7 @@ func Warn(message string, args map[string]string) {
 	for str, val := range args {
 		fields = append(fields, zap.String(str, val))
 	} 
+	fields = append(fields, commonFields...) 
 	logger.Warn(message, fields...)
 }
 
@@ -78,6 +83,7 @@ func Error(message string, args map[string]string) {
 	for str, val := range args {
 		fields = append(fields, zap.String(str, val))
 	} 
+	fields = append(fields, commonFields...) 
 	logger.Error(message, fields...)
 	os.Exit(1)
 }
