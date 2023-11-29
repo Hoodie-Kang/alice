@@ -62,24 +62,22 @@ func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 }
 
 const signProtocol = "/sign/1.0.0"
-const ServerPort = "10003"
-const ServerIP = "127.0.0.1"
 
-func Sign(path string, ip string, port string, jwt string) {
+func Sign(path string, serverIp string, clientIp string, serverPort string, clientPort string, jwt string) {
 	config, err := ReadSignConfigFile(path)
 	if err != nil {
 		logger.Error("Failed to read key file", map[string]string{"err": err.Error(), "path": path})
 	}
 
 	// Make a host that listens on the given multiaddress.
-	host, err := node.MakeBasicHost(ip, port)
+	host, err := node.MakeBasicHost(clientIp, clientPort)
 	if err != nil {
 		logger.Error("Failed to create a basic host", map[string]string{"err": err.Error()})
 	}
 
 	// Create a new peer manager.
 	pm := node.NewPeerManager("User", host, signProtocol)
-	pm.AddPeer(ServerIP, ServerPort)
+	pm.AddPeer(serverIp, serverPort)
 
 	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.PaillierKey, config.Ped, config.BKs)
 	if err != nil {
@@ -105,7 +103,7 @@ func Sign(path string, ip string, port string, jwt string) {
 	host.Network().Notify(&network.NotifyBundle{
 		DisconnectedF: func(network.Network, network.Conn) {
 			fmt.Println("Connection was closed, reconnect")
-			logger.Info("Connection was closed, reconnect", map[string]string{})
+			logger.Error("Connection was closed, reconnect", map[string]string{})
 		},
 	})
 
@@ -121,9 +119,11 @@ func Sign(path string, ip string, port string, jwt string) {
 
 func main() {
 	path := os.Getenv("FILE_PATH")
-	ip := os.Getenv("IP")
-	port := os.Getenv("PORT")
+	serverIp := os.Getenv("SERVER_IP")
+	clientIp := os.Getenv("IP")
+	serverPort := os.Getenv("SERVER_PORT")
+	clientPort := os.Getenv("PORT")
 	token := os.Getenv("JWT")
 
-	Sign(path, ip, port, token)
+	Sign(path, serverIp, clientIp, serverPort, clientPort, token)
 }
