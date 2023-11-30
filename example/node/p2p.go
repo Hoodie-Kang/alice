@@ -29,7 +29,7 @@ import (
 
 // MakeBasicHost creates a LibP2P host.
 func MakeBasicHost(ip string, port string) (host.Host, error) {
-	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/%s/tcp/%s", ip, port))
+	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%s", port))
 	if err != nil {
 		return nil, err
 	}
