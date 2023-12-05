@@ -162,7 +162,6 @@ func (t *MsgMain) messageLoop(ctx context.Context) (err error) {
 		handler = t.currentHandler
 		t.handlerLock.Unlock()
 		newType := handler.MessageType()
-		logger.Info("Change handler", "oldType", msgType, "newType", newType)
 		msgType = newType
 		msgCount = uint32(0)
 	}
@@ -174,7 +173,6 @@ func (t *MsgMain) setState(newState types.MainState) error {
 		return ErrInvalidStateTransition
 	}
 
-	logger.Info("State changed", "old", t.state, "new", newState)
 	oldState := t.state
 	t.state = newState
 	t.listener.OnStateChanged(oldState, newState)

@@ -110,7 +110,6 @@ func (p *peerManager) MustSend(peerId string, message interface{}) {
 		return
 	}
 
-	logger.Debug("Sent message", "peer", target)
 }
 
 // EnsureAllConnected connects the host to specified peer and sends the message to it.
@@ -152,7 +151,6 @@ func (p *peerManager) EnsureAllConnected() {
 				}
 			}
 
-			logger.Debug("Waiting for peers")
 			time.Sleep(2 * time.Second)
 		}
 	}
@@ -172,7 +170,6 @@ func (p *peerManager) EnsureAllConnected() {
 					time.Sleep(3 * time.Second)
 					continue
 				}
-				logger.Info("Successfully connect to peer", "peer", addr)
 				return
 			}
 		}()

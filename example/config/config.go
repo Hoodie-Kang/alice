@@ -13,12 +13,6 @@
 // limitations under the License.
 package config
 
-import (
-	"os"
-
-	"encoding/json"
-)
-
 type Pubkey struct {
 	X string `json:"x"`
 	Y string `json:"y"`
@@ -43,12 +37,4 @@ type Ped struct {
 	N string `json:"n"`
 	S string `json:"s"`
 	T string `json:"t"`
-}
-
-func WriteJsonFile(jsonData interface{}, filePath string) error {
-	data, err := json.Marshal(jsonData)
-	if err != nil {
-		return err
-	}
-	return os.WriteFile(filePath, data, 0600)
 }
