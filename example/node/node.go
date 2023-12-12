@@ -18,7 +18,7 @@ import (
 	"io"
 	"reflect"
 
-	"github.com/getamis/sirius/log"
+	"github.com/getamis/alice/example/logger"
 	"github.com/libp2p/go-libp2p/core/network"
 	"google.golang.org/protobuf/proto"
 
@@ -43,7 +43,7 @@ func (n *node[M, R]) Handle(s network.Stream) {
 	var data M
 	buf, err := io.ReadAll(s)
 	if err != nil {
-		log.Warn("Cannot read data from stream", "err", err)
+		logger.Error("Cannot read data from stream", map[string]string{"err": err.Error()})
 		return
 	}
 	s.Close()
@@ -54,14 +54,14 @@ func (n *node[M, R]) Handle(s network.Stream) {
 	// unmarshal it
 	err = proto.Unmarshal(buf, data)
 	if err != nil {
-		log.Error("Cannot unmarshal data", "err", err)
+		logger.Error("Cannot unmarshal data", map[string]string{"err": err.Error()})
 		return
 	}
 
 	// log.Info("Received request", "from", s.Conn().RemotePeer())
 	err = n.backend.AddMessage(data.GetId(), data)
 	if err != nil {
-		log.Warn("Cannot add message to DKG", "err", err)
+		logger.Error("Cannot add message to DKG", map[string]string{"err": err.Error()})
 		return
 	}
 }

@@ -21,6 +21,7 @@ import (
 	"github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/tss"
 	"github.com/getamis/alice/types"
+	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/sirius/log"
 )
 
@@ -55,21 +56,21 @@ func (p *decommitHandler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *decommitHandler) IsHandled(logger log.Logger, id string) bool {
+func (p *decommitHandler) IsHandled(logg log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return false
 	}
 	return peer.decommit != nil
 }
 
-func (p *decommitHandler) HandleMessage(logger log.Logger, message types.Message) error {
+func (p *decommitHandler) HandleMessage(logg log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return tss.ErrPeerNotFound
 	}
 
@@ -78,11 +79,11 @@ func (p *decommitHandler) HandleMessage(logger log.Logger, message types.Message
 	peerMessage := getMessageByType(peer, Type_Peer)
 	ridi, A, u0g, err := commitment.GetPointInfoHashCommitment(p.sid, peerMessage.GetPeer().GetCommitment(), body.GetHashDecommitment())
 	if err != nil {
-		logger.Warn("Failed to get u0g", "err", err)
+		logger.Error("Failed to get u0g", map[string]string{"err": err.Error()})
 		return err
 	}
 	if len(ridi) != LenRidi {
-		logger.Warn("Invalid ridi length", "lens", len(ridi))
+		logger.Error("Invalid ridi length", map[string]string{"lens": string(len(ridi))})
 		return ErrInvalidRidi
 	}
 
@@ -106,6 +107,6 @@ func (p *decommitHandler) HandleMessage(logger log.Logger, message types.Message
 	return peer.AddMessage(msg)
 }
 
-func (p *decommitHandler) Finalize(logger log.Logger) (types.Handler, error) {
+func (p *decommitHandler) Finalize(logg log.Logger) (types.Handler, error) {
 	return newVerifyHandler(p), nil
 }

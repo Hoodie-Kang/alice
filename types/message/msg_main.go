@@ -17,10 +17,12 @@ package message
 import (
 	"context"
 	"errors"
+	"strconv"
 	"sync"
 
+	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/alice/types"
-	logger "github.com/getamis/sirius/log"
+	"github.com/getamis/sirius/log"
 )
 
 var (
@@ -81,13 +83,13 @@ func (t *MsgMain) Stop() {
 
 func (t *MsgMain) AddMessage(senderId string, msg types.Message) error {
 	if senderId != msg.GetId() {
-		logger.Warn("Different sender", "senderId", senderId, "msgId", msg.GetId())
+		logger.Error("Different sender", map[string]string{"senderId": senderId, "msgId": msg.GetId()})
 		return ErrBadMsg
 	}
 	currentMsgType := t.GetHandler().MessageType()
 	newMessageType := msg.GetMessageType()
 	if currentMsgType > newMessageType {
-		logger.Warn("Ignore old message", "currentMsgType", currentMsgType, "newMessageType", newMessageType)
+		logger.Error("Ignore old message", map[string]string{"currentMsgType": strconv.FormatInt(int64(currentMsgType), 10), "newMessageType": strconv.FormatInt(int64(newMessageType), 10)})
 		return ErrOldMessage
 	}
 	return t.msgChs.Push(msg)
@@ -127,19 +129,19 @@ func (t *MsgMain) messageLoop(ctx context.Context) (err error) {
 		// 5. If yes, finalize the handler. Otherwise, wait for the next message
 		msg, err := t.msgChs.Pop(ctx, msgType)
 		if err != nil {
-			logger.Warn("Failed to pop message", "err", err)
+			logger.Error("Failed to pop message", map[string]string{"err": err.Error()})
 			return err
 		}
 		id := msg.GetId()
-		l := logger.New("msgType", msgType, "fromId", id)
+		l := log.New("msgType", msgType, "fromId", id)
 		if handler.IsHandled(l, id) {
-			logger.Warn("The message is handled before", "msgType", msgType, "fromId", id)
+			logger.Error("The message is handled before", map[string]string{"msgType": strconv.FormatInt(int64(msgType), 10), "fromId": id})
 			return ErrDupMsg
 		}
 
 		err = handler.HandleMessage(l, msg)
 		if err != nil {
-			logger.Warn("Failed to save message", "err", err)
+			logger.Error("Failed to save message", map[string]string{"err": err.Error()})
 			return err
 		}
 
@@ -150,7 +152,7 @@ func (t *MsgMain) messageLoop(ctx context.Context) (err error) {
 
 		nextHandler, err := handler.Finalize(l)
 		if err != nil {
-			logger.Warn("Failed to go to next handler", "err", err)
+			logger.Error("Failed to go to next handler", map[string]string{"err": err.Error()})
 			return err
 		}
 		// if nextHandler is nil, it means we got the final result
@@ -169,7 +171,7 @@ func (t *MsgMain) messageLoop(ctx context.Context) (err error) {
 
 func (t *MsgMain) setState(newState types.MainState) error {
 	if t.isInFinalState() {
-		logger.Warn("Invalid state transition", "old", t.state, "new", newState)
+		logger.Error("Invalid state transition", map[string]string{"old": t.state.String(), "new": newState.String()})
 		return ErrInvalidStateTransition
 	}
 

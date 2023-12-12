@@ -21,11 +21,10 @@ import (
 
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/refresh"
-
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/alice/example/node"
 	"github.com/getamis/alice/example/utils"
-	logger "github.com/getamis/sirius/log"
+	"github.com/getamis/alice/example/logger"
 	"github.com/libp2p/go-libp2p/core/network"
 )
 
@@ -68,20 +67,6 @@ type RefreshResult struct {
 	SSid          []byte                    `json:"ssid"`
 }
 
-func ReadRefreshConfigFile(filaPath string) (*RefreshConfig, error) {
-	c := &RefreshConfig{}
-	yamlFile, err := os.ReadFile(filaPath)
-	if err != nil {
-		return nil, err
-	}
-	err = json.Unmarshal(yamlFile, c)
-	if err != nil {
-		return nil, err
-	}
-
-	return c, nil
-}
-
 const refreshProtocol = "/refresh/1.0.0"
 const dkgProtocol = "/dkg/1.0.0"
 
@@ -98,14 +83,14 @@ func Dkg(por string, peer string) []byte {
 	// Make a host that listens on the given multiaddress.
 	host, err := node.MakeBasicHost(con.Port)
 	if err != nil {
-		logger.Error("Failed to create a basic host", "err", err)
+		logger.Error("Failed to create a basic host", map[string]string{"err": err.Error()})
 	}
 
 	// Create a new peer manager.
 	pm := node.NewPeerManager(utils.GetPeerIDFromPort(con.Port), host, dkgProtocol)
 	err = pm.AddPeers(con.Peers)
 	if err != nil {
-		logger.Error("Failed to add peers", "err", err)
+		logger.Error("Failed to add peers", map[string]string{"err": err.Error()})
 	}
 
 	l := node.NewListener()
@@ -113,13 +98,13 @@ func Dkg(por string, peer string) []byte {
 	// Create dkg
 	service, err := dkg.NewDKG(utils.GetCurve(), pm, []byte("1"), con.Threshold, con.Rank, l)
 	if err != nil {
-		logger.Error("Cannot create a new dkg", "err", err)
+		logger.Error("Cannot create a new dkg", map[string]string{"err": err.Error()})
 	}
 
 	// Create a new service.
 	node := node.New[*dkg.Message, *dkg.Result](service, l, pm)
 	if err != nil {
-		logger.Error("Failed to new service", "err", err)
+		logger.Error("Failed to new service", map[string]string{"err": err.Error()})
 	}
 
 	// Set a stream handler on the host.
@@ -132,7 +117,7 @@ func Dkg(por string, peer string) []byte {
 	// Start DKG process.
 	result, err := node.Process()
 	if err != nil {
-		logger.Error("Refresh Result error", "err", err)
+		logger.Error("Refresh Result error", map[string]string{"err": err.Error()})
 	}
 	dkgResult := &DKGResult{
 		Port:  con.Port,
@@ -170,37 +155,33 @@ func Dkg(por string, peer string) []byte {
 	}
 	jsonData, err := json.Marshal(dkgResult)
 	if err != nil {
-		logger.Error("json marshal error", err)
+		logger.Error("json marshal error", map[string]string{"err": err.Error()})
 	}
 	return jsonData
 }
 
-func Refresh(con RefreshConfig, por string) {
-	port, _ := strconv.ParseInt(por, 10, 64)
-	con.Port = port
-	if con.Peers[0] == 10002 {
-		con.Peers[0] = 10004
-	} else {
-		con.Peers[0] = 10003
-	}
+func Refresh(con RefreshConfig, port string, peer string) {
+	con.Port, _ = strconv.ParseInt(port, 10, 64)
+	peers, _ := strconv.ParseInt(peer, 10, 64)
+	con.Peers = []int64{peers}
 	// Make a host that listens on the given multiaddress.
 	host, err := node.MakeBasicHost(con.Port)
 	if err != nil {
-		logger.Error("Failed to create a basic host", "err", err)
+		logger.Error("Failed to create a basic host", map[string]string{"err": err.Error()})
 	}
 	defer host.Close()
 
 	// Refresh needs results from DKG.
 	dkgResult, err := utils.ConvertDKGResult(con.Pubkey, con.Share, con.BKs, con.PartialPubKey)
 	if err != nil {
-		logger.Error("Cannot get DKG result", "err", err)
+		logger.Error("Cannot get DKG result", map[string]string{"err": err.Error()})
 	}
 
 	// Create a new peer manager.
 	pm := node.NewPeerManager(utils.GetPeerIDFromPort(con.Port), host, refreshProtocol)
 	err = pm.AddPeers(con.Peers)
 	if err != nil {
-		logger.Error("Failed to add peers", "err", err)
+		logger.Error("Failed to add peers", map[string]string{"err": err.Error()})
 	}
 
 	l := node.NewListener()
@@ -208,13 +189,13 @@ func Refresh(con RefreshConfig, por string) {
 	// Create a new service.
 	service, err := refresh.NewRefresh(dkgResult.Share, dkgResult.PublicKey, pm, 2, dkgResult.PartialPubKey, dkgResult.Bks, 2048, con.SSid, l)
 	if err != nil {
-		logger.Error("Cannot create a new refresh", "err", err)
+		logger.Error("Cannot create a new refresh", map[string]string{"err": err.Error()})
 	}
 
 	// Create a new node.
 	node := node.New[*refresh.Message, *refresh.Result](service, l, pm)
 	if err != nil {
-		logger.Error("Failed to new service", "err", err)
+		logger.Error("Failed to new service", map[string]string{"err": err.Error()})
 	}
 
 	// Set a stream handler on the host.
@@ -227,7 +208,7 @@ func Refresh(con RefreshConfig, por string) {
 
 	result, err := node.Process()
 	if err != nil {
-		logger.Error("Refresh Result error", "err", err)
+		logger.Error("Refresh Result error", map[string]string{"err": err.Error()})
 		return
 	}
 
@@ -286,7 +267,7 @@ func Refresh(con RefreshConfig, por string) {
 	}
 	jsonData, err := json.Marshal(refreshResult)
 	if err != nil {
-		logger.Error("json marshal error", err)
+		logger.Error("json marshal error", map[string]string{"err": err.Error()})
 	}
 	fmt.Println(jsonData)
 }
@@ -296,7 +277,7 @@ func main() {
 	var data RefreshConfig
 	err := json.Unmarshal(dkgresult, &data)
 	if err != nil {
-		logger.Error("json unmarshal error", err)
+		logger.Error("json unmarshal error", map[string]string{"err": err.Error()})
 	}
-	Refresh(data, os.Args[3])
+	Refresh(data, os.Args[3], os.Args[4])
 }

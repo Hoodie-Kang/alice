@@ -28,6 +28,7 @@ import (
 	"github.com/getamis/alice/crypto/utils"
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
+	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/sirius/log"
 )
 
@@ -176,27 +177,27 @@ func (p *round1Handler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *round1Handler) IsHandled(logger log.Logger, id string) bool {
+func (p *round1Handler) IsHandled(logg log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return false
 	}
 	return peer.Messages[p.MessageType()] != nil
 }
 
-func (p *round1Handler) HandleMessage(logger log.Logger, message types.Message) error {
+func (p *round1Handler) HandleMessage(logg log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return tss.ErrPeerNotFound
 	}
 	return peer.AddMessage(msg)
 }
 
-func (p *round1Handler) Finalize(logger log.Logger) (types.Handler, error) {
+func (p *round1Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	cggmp.Broadcast(p.peerManager, &Message{
 		Type: Type_Round2,
 		Id:   p.peerManager.SelfID(),

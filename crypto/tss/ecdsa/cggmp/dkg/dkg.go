@@ -25,7 +25,7 @@ import (
 	"github.com/getamis/alice/crypto/utils"
 	"github.com/getamis/alice/types"
 	"github.com/getamis/alice/types/message"
-	"github.com/getamis/sirius/log"
+	"github.com/getamis/alice/example/logger"
 )
 
 type DKG struct {
@@ -88,7 +88,7 @@ func (d *DKG) GetResult() (*Result, error) {
 	h := d.GetHandler()
 	rh, ok := h.(*resultHandler)
 	if !ok {
-		log.Error("We cannot convert to result handler in done state")
+		logger.Error("We cannot convert to result handler in done state", map[string]string{"err": tss.ErrNotReady.Error()})
 		return nil, tss.ErrNotReady
 	}
 

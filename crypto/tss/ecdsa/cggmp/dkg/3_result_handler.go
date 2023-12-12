@@ -20,6 +20,7 @@ import (
 	"github.com/getamis/alice/crypto/tss"
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp"
 	"github.com/getamis/alice/types"
+	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/sirius/log"
 )
 
@@ -45,43 +46,43 @@ func (p *resultHandler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *resultHandler) IsHandled(logger log.Logger, id string) bool {
+func (p *resultHandler) IsHandled(logg log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return false
 	}
 	return peer.result != nil
 }
 
-func (p *resultHandler) HandleMessage(logger log.Logger, message types.Message) error {
+func (p *resultHandler) HandleMessage(logg log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return tss.ErrPeerNotFound
 	}
 
 	siGProofMsg := msg.GetResult().SiGProofMsg
 	alphaHat, err := siGProofMsg.Alpha.ToPoint()
 	if err != nil {
-		logger.Warn("Failed to get point", "err", err)
+		logger.Error("Failed to get point", map[string]string{"err": err.Error()})
 		return err
 	}
 	if !peer.decommit.schnorrAPoint.Equal(alphaHat) {
-		logger.Warn("Failed to verify Schnorr commitment", "err", err)
+		logger.Error("Failed to verify Schnorr commitment", map[string]string{"err": err.Error()})
 		return err
 	}
 
 	r, err := siGProofMsg.V.ToPoint()
 	if err != nil {
-		logger.Warn("Failed to get point", "err", err)
+		logger.Error("Failed to get point", map[string]string{"err": err.Error()})
 		return err
 	}
 	err = siGProofMsg.Verify(ecpointgrouplaw.NewBase(p.publicKey.GetCurve()), cggmp.ComputeSSID(p.sid, []byte(peer.peer.bk.String()), p.rid))
 	if err != nil {
-		logger.Warn("Failed to verify Schorr proof", "err", err)
+		logger.Error("Failed to verify Schorr proof", map[string]string{"err": err.Error()})
 		return err
 	}
 	peer.result = &resultData{
@@ -90,12 +91,12 @@ func (p *resultHandler) HandleMessage(logger log.Logger, message types.Message) 
 	return peer.AddMessage(msg)
 }
 
-func (p *resultHandler) Finalize(logger log.Logger) (types.Handler, error) {
+func (p *resultHandler) Finalize(logg log.Logger) (types.Handler, error) {
 	bks := make(birkhoffinterpolation.BkParameters, p.peerNum+1)
 	sgs := make([]*ecpointgrouplaw.ECPoint, p.peerNum+1)
 	siG, err := p.siGProofMsg.V.ToPoint()
 	if err != nil {
-		logger.Warn("Failed to get point", "err", err)
+		logger.Error("Failed to get point", map[string]string{"err": err.Error()})
 		return nil, err
 	}
 	bks[0] = p.bk

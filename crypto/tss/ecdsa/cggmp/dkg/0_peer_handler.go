@@ -27,6 +27,7 @@ import (
 	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp"
 	"github.com/getamis/alice/crypto/utils"
 	"github.com/getamis/alice/types"
+	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/sirius/log"
 )
 
@@ -141,27 +142,27 @@ func (p *peerHandler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *peerHandler) IsHandled(logger log.Logger, id string) bool {
+func (p *peerHandler) IsHandled(logg log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found",map[string]string{})
 		return false
 	}
 	return peer.peer != nil
 }
 
-func (p *peerHandler) HandleMessage(logger log.Logger, message types.Message) error {
+func (p *peerHandler) HandleMessage(logg log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return tss.ErrPeerNotFound
 	}
 	body := msg.GetPeer()
 	bk, err := body.GetBk().ToBk(p.fieldOrder)
 	if err != nil {
-		logger.Warn("Failed to get bk", "err", err)
+		logger.Error("Failed to get bk", map[string]string{"err": err.Error()})
 		return err
 	}
 
@@ -171,7 +172,7 @@ func (p *peerHandler) HandleMessage(logger log.Logger, message types.Message) er
 	return peer.AddMessage(msg)
 }
 
-func (p *peerHandler) Finalize(logger log.Logger) (types.Handler, error) {
+func (p *peerHandler) Finalize(logg log.Logger) (types.Handler, error) {
 	// Check if the bks are ok
 	bks := make(birkhoffinterpolation.BkParameters, p.peerNum+1)
 	bks[0] = p.bk
@@ -182,7 +183,7 @@ func (p *peerHandler) Finalize(logger log.Logger) (types.Handler, error) {
 	}
 	err := bks.CheckValid(p.threshold, p.fieldOrder)
 	if err != nil {
-		logger.Warn("Failed to check bks", "err", err)
+		logger.Error("Failed to check bks", map[string]string{"err": err.Error()})
 		return nil, err
 	}
 

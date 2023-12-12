@@ -20,12 +20,12 @@ import (
 	"time"
 
 	"github.com/getamis/alice/example/utils"
+	"github.com/getamis/alice/example/logger"
 	"github.com/libp2p/go-libp2p/core/host"
 	"github.com/libp2p/go-libp2p/core/peer"
 	"github.com/libp2p/go-libp2p/core/protocol"
 	"github.com/multiformats/go-multiaddr"
 	"google.golang.org/protobuf/proto"
-	logger "github.com/getamis/sirius/log"
 )
 
 type peerManager struct {
@@ -66,7 +66,7 @@ func (p *peerManager) PeerIDs() []string {
 func (p *peerManager) MustSend(peerId string, message interface{}) {
 	msg, ok := message.(proto.Message)
 	if !ok {
-		logger.Warn("invalid proto message")
+		logger.Error("invalid proto message", map[string]string{})
 		return
 	}
 
@@ -75,41 +75,40 @@ func (p *peerManager) MustSend(peerId string, message interface{}) {
 	// Turn the destination into a multiaddr.
 	maddr, err := multiaddr.NewMultiaddr(target)
 	if err != nil {
-		logger.Warn("Cannot parse the target address", "target", target, "err", err)
+		logger.Error("Cannot parse the target address", map[string]string{"target": target, "err": err.Error()})
 		return
 	}
 
 	// Extract the peer ID from the multiaddr.
 	info, err := peer.AddrInfoFromP2pAddr(maddr)
 	if err != nil {
-		logger.Warn("Cannot parse addr", "addr", maddr, "err", err)
+		logger.Error("Cannot parse addr", map[string]string{"addr": maddr.String(), "err": err.Error()})
 		return
 	}
 
 	s, err := p.host.NewStream(context.Background(), info.ID, p.protocol)
 	if err != nil {
-		logger.Warn("Cannot create a new stream", "from", p.host.ID(), "to", info.ID, "protocol", p.protocol, "err", err)
+		logger.Error("Cannot create a new stream", map[string]string{"from": p.host.ID().String(), "to": info.ID.String(), "protocol": string(p.protocol), "err": err.Error()})
 		return
 	}
 
 	bs, err := proto.Marshal(msg)
 	if err != nil {
-		logger.Warn("Cannot marshal message", "err", err)
+		logger.Error("Cannot marshal message", map[string]string{"err": err.Error()})
 		return
 	}
 
 	_, err = s.Write(bs)
 	if err != nil {
-		logger.Warn("Cannot write message to IO", "err", err)
+		logger.Error("Cannot write message to IO", map[string]string{"err": err.Error()})
 		return
 	}
 
 	err = s.Close()
 	if err != nil {
-		logger.Warn("Cannot close the stream", "err", err)
+		logger.Error("Cannot close the stream", map[string]string{"err": err.Error()})
 		return
 	}
-
 }
 
 // EnsureAllConnected connects the host to specified peer and sends the message to it.
@@ -121,28 +120,29 @@ func (p *peerManager) EnsureAllConnected() {
 		// Turn the destination into a multiaddr.
 		maddr, err := multiaddr.NewMultiaddr(target)
 		if err != nil {
-			logger.Warn("Cannot parse the target address", "target", target, "err", err)
+			logger.Error("Cannot parse the target address", map[string]string{"target": target, "err": err.Error()})
 			return err
 		}
 
 		// Extract the peer ID from the multiaddr.
 		info, err := peer.AddrInfoFromP2pAddr(maddr)
 		if err != nil {
-			logger.Error("Cannot parse addr", "addr", maddr, "err", err)
+			logger.Error("Cannot parse addr",map[string]string{ "addr": maddr.String(), "err": err.Error()})
 			return err
 		}
 
 		// Connect the host to the peer.
 		err = host.Connect(ctx, *info)
 		if err != nil {
-			// log.Warn("Failed to connect to peer", "err", err)
+			// log.Warn("Failed to connect to peer", map[string]string{"err": err.Error()})
 			return err
 		}
 
 		for {
 			protocols, err := host.Peerstore().GetProtocols(info.ID)
 			if err != nil {
-				logger.Warn("Failed to get peer protocols", "err", err)
+				logger.Error("Failed to get peer protocols", map[string]string{"err": err.Error()})
+				return err
 			}
 
 			for _, prootocol := range protocols {
@@ -150,7 +150,6 @@ func (p *peerManager) EnsureAllConnected() {
 					return nil
 				}
 			}
-
 			time.Sleep(2 * time.Second)
 		}
 	}
@@ -161,12 +160,16 @@ func (p *peerManager) EnsureAllConnected() {
 
 		go func() {
 			defer wg.Done()
-
+			deadline := time.Now().Add(5 * time.Second)
 			for {
-				// Connect the host to the peer.
-				err := connect(context.Background(), p.host, addr)
+				// Connect the host to the peer. with timeout
+				ctx, cancel := context.WithDeadline(context.Background(), deadline)
+				defer cancel()
+				if ctx.Err() == context.DeadlineExceeded {
+					logger.Timeout("Connection Timeout", map[string]string{"err": ctx.Err().Error(), "addr": addr})
+				}
+				err := connect(ctx, p.host, addr)
 				if err != nil {
-					// logger.Warn("Failed to connect to peer", "err", err)
 					time.Sleep(3 * time.Second)
 					continue
 				}
@@ -188,7 +191,7 @@ func (p *peerManager) AddPeers(peerPorts []int64) error {
 		peerID := utils.GetPeerIDFromPort(peerPort)
 		peerAddr, err := getPeerAddr(peerPort)
 		if err != nil {
-			logger.Warn("Cannot get peer address", "peerID", peerID, "err", err)
+			logger.Error("Cannot get peer address", map[string]string{"peerID": peerID, "err": err.Error()})
 			return err
 		}
 		p.peers[peerID] = peerAddr

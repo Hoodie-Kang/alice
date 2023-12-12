@@ -26,6 +26,7 @@ import (
 	"github.com/getamis/alice/crypto/zkproof"
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/types"
+	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/sirius/log"
 )
 
@@ -71,21 +72,21 @@ func (p *round2Handler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *round2Handler) IsHandled(logger log.Logger, id string) bool {
+func (p *round2Handler) IsHandled(logg log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return false
 	}
 	return peer.Messages[p.MessageType()] != nil
 }
 
-func (p *round2Handler) HandleMessage(logger log.Logger, message types.Message) error {
+func (p *round2Handler) HandleMessage(logg log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return tss.ErrPeerNotFound
 	}
 
@@ -94,14 +95,14 @@ func (p *round2Handler) HandleMessage(logger log.Logger, message types.Message) 
 	decommitData := &HashMsg{}
 	err := round1.GetRound1().Commitment.DecommitToProto(msg.GetRound2().GetDecommitment(), decommitData)
 	if err != nil {
-		logger.Warn("Failed to decommit message", "err", err)
+		logger.Error("Failed to decommit message", map[string]string{"err": err.Error()})
 		return err
 	}
 
 	// Verify HashMsg
 	data, err := p.buildRound2Data(id, decommitData)
 	if err != nil {
-		logger.Warn("Failed to build round2 data", "err", err)
+		logger.Error("Failed to build round2 data", map[string]string{"err": err.Error()})
 		return err
 	}
 	peer.round2 = data
@@ -153,7 +154,7 @@ func (p *round2Handler) buildRound2Data(peerId string, commitData *HashMsg) (*ro
 	}, nil
 }
 
-func (p *round2Handler) Finalize(logger log.Logger) (types.Handler, error) {
+func (p *round2Handler) Finalize(logg log.Logger) (types.Handler, error) {
 	curve := p.pubKey.GetCurve()
 	G := pt.NewBase(curve)
 	sumrho := make([]byte, BYTELENGTHKAPPA)

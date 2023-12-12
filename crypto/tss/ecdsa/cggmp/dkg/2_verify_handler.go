@@ -26,6 +26,7 @@ import (
 	"github.com/getamis/alice/crypto/utils"
 	"github.com/getamis/alice/crypto/zkproof"
 	"github.com/getamis/alice/types"
+	"github.com/getamis/alice/example/logger"
 	"github.com/getamis/sirius/log"
 )
 
@@ -59,21 +60,21 @@ func (p *verifyHandler) GetRequiredMessageCount() uint32 {
 	return p.peerNum
 }
 
-func (p *verifyHandler) IsHandled(logger log.Logger, id string) bool {
+func (p *verifyHandler) IsHandled(logg log.Logger, id string) bool {
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return false
 	}
 	return peer.verify != nil
 }
 
-func (p *verifyHandler) HandleMessage(logger log.Logger, message types.Message) error {
+func (p *verifyHandler) HandleMessage(logg log.Logger, message types.Message) error {
 	msg := getMessage(message)
 	id := msg.GetId()
 	peer, ok := p.peers[id]
 	if !ok {
-		logger.Warn("Peer not found")
+		logger.Error("Peer not found", map[string]string{})
 		return tss.ErrPeerNotFound
 	}
 
@@ -82,7 +83,7 @@ func (p *verifyHandler) HandleMessage(logger log.Logger, message types.Message) 
 	decommitMessage := getMessageByType(peer, Type_Decommit)
 	err := verify.Verify(decommitMessage.GetDecommit().GetPointCommitment(), p.bk, p.threshold-1)
 	if err != nil {
-		logger.Warn("Failed to verify message", "err", err)
+		logger.Error("Failed to verify message", map[string]string{"err": err.Error()})
 		return err
 	}
 	peer.verify = &verifyData{
@@ -91,14 +92,14 @@ func (p *verifyHandler) HandleMessage(logger log.Logger, message types.Message) 
 	return peer.AddMessage(msg)
 }
 
-func (p *verifyHandler) Finalize(logger log.Logger) (types.Handler, error) {
+func (p *verifyHandler) Finalize(logg log.Logger) (types.Handler, error) {
 	// Build the public key, the sum of uG
 	var err error
 	publicKey := p.u0g.Copy()
 	for _, peer := range p.peers {
 		publicKey, err = publicKey.Add(peer.decommit.u0g)
 		if err != nil {
-			logger.Warn("Failed to add ug", "err", err)
+			logger.Error("Failed to add ug", map[string]string{"err": err.Error()})
 			return nil, err
 		}
 	}
@@ -129,7 +130,7 @@ func (p *verifyHandler) Finalize(logger log.Logger) (types.Handler, error) {
 	big0 := big.NewInt(0)
 	p.siGProofMsg, err = zkproof.NewSchnorrMessageWithGivenMN(p.share, big0, p.peerHandler.schnorrAValue, big0, ecpointgrouplaw.NewBase(p.publicKey.GetCurve()), cggmp.ComputeSSID(p.sid, []byte(p.bk.String()), p.rid))
 	if err != nil {
-		log.Warn("Failed to new si schorr proof", "err", err)
+		logger.Error("Failed to new si schorr proof", map[string]string{"err": err.Error()})
 		return nil, err
 	}
 	msg := p.getResultMessage()
