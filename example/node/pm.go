@@ -189,7 +189,7 @@ func (p *peerManager) AddPeer(peerId string, peerAddr string) {
 func (p *peerManager) AddPeers(peerPorts []int64) error {
 	for _, peerPort := range peerPorts {
 		peerID := utils.GetPeerIDFromPort(peerPort)
-		peerAddr, err := getPeerAddr(peerPort)
+		peerAddr, err := GetPeerAddr(peerPort)
 		if err != nil {
 			logger.Error("Cannot get peer address", map[string]string{"peerID": peerID, "err": err.Error()})
 			return err
