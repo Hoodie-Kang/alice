@@ -70,6 +70,14 @@ type RefreshResult struct {
 const refreshProtocol = "/refresh/1.0.0"
 const dkgProtocol = "/dkg/1.0.0"
 
+func writeJsonFile(jsonData interface{}, filePath string) error {
+	data, err := json.Marshal(jsonData)
+	if err != nil {
+		return err
+	}
+	return os.WriteFile(filePath, data, 0600)
+}
+
 func Dkg(por string, peer string) []byte {
 	port, _ := strconv.ParseInt(por, 10, 64)
 	peers, _ := strconv.ParseInt(peer, 10, 64)
@@ -269,15 +277,17 @@ func Refresh(con RefreshConfig, port string, peer string) {
 	if err != nil {
 		logger.Error("json marshal error", map[string]string{"err": err.Error()})
 	}
+	path := "./dkgresult.json"
+	writeJsonFile(refreshResult, path)
 	fmt.Println(jsonData)
 }
 
-func main() {
-	dkgresult := Dkg(os.Args[1], os.Args[2])
-	var data RefreshConfig
-	err := json.Unmarshal(dkgresult, &data)
-	if err != nil {
-		logger.Error("json unmarshal error", map[string]string{"err": err.Error()})
-	}
-	Refresh(data, os.Args[3], os.Args[4])
-}
+// func main() {
+// 	dkgresult := Dkg(os.Args[1], os.Args[2])
+// 	var data RefreshConfig
+// 	err := json.Unmarshal(dkgresult, &data)
+// 	if err != nil {
+// 		logger.Error("json unmarshal error", map[string]string{"err": err.Error()})
+// 	}
+// 	Refresh(data, os.Args[3], os.Args[4])
+// }

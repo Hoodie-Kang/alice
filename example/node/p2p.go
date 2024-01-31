@@ -30,7 +30,7 @@ import (
 
 // MakeBasicHost creates a LibP2P host.
 func MakeBasicHost(port int64) (host.Host, error) {
-	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/127.0.0.1/tcp/%d", port))
+	sourceMultiAddr, err := multiaddr.NewMultiaddr(fmt.Sprintf("/ip4/0.0.0.0/tcp/%d", port))
 	if err != nil {
 		return nil, err
 	}
@@ -87,6 +87,7 @@ func GetPeerAddr(port int64) (string, error) {
 		return "", err
 	}
 
+	// return fmt.Sprintf("/ip4/10.0.2.2/tcp/%d/p2p/%s", port, pid), nil
 	return fmt.Sprintf("/ip4/127.0.0.1/tcp/%d/p2p/%s", port, pid), nil
 }
 
