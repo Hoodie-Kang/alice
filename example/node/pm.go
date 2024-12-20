@@ -181,8 +181,12 @@ func (p *peerManager) EnsureAllConnected() {
 }
 
 // AddPeer adds a peer to the peer list.
-func (p *peerManager) AddPeer(peerId string, peerAddr string) {
-	p.peers[peerId] = peerAddr
+func (p *peerManager) AddPeer(peerID string, port int64) {
+	peerAddr, err := GetPeerAddr(port)
+	if err != nil {
+		logger.Error("Cannot get peer address", map[string]string{"peerID": peerID, "err": err.Error()})
+	}
+	p.peers[peerID] = peerAddr
 }
 
 // AddPeers adds peers to peer list.

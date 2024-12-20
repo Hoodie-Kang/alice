@@ -18,11 +18,12 @@ import (
 	"fmt"
 	"math/big"
 
-	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
+	"github.com/getamis/alice/crypto/bip32/master"
 	"github.com/getamis/alice/crypto/birkhoffinterpolation"
 	"github.com/getamis/alice/crypto/ecpointgrouplaw"
 	"github.com/getamis/alice/crypto/elliptic"
 	"github.com/getamis/alice/crypto/homo/paillier"
+	"github.com/getamis/alice/crypto/tss/ecdsa/cggmp/dkg"
 	paillierzkproof "github.com/getamis/alice/crypto/zkproof/paillier"
 	"github.com/getamis/alice/example/config"
 	"github.com/getamis/sirius/log"
@@ -48,9 +49,9 @@ func GetPeerIDFromPort(port int64) string {
 	// For convenience, we set peer ID as "id-" + port
 	// 지금은 sign 에서만 필요 .. refresh 수정필요
 	// if port % 2 == 1 {
-	// 	return "Octet"	
+	// 	return "Alice"	
 	// } else if port % 2 == 0 {
-	// 	return "User"
+	// 	return "Bob"
 	// }
 	return fmt.Sprintf("id-%d", port)
 }
@@ -124,6 +125,52 @@ func ConvertDKGResult(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[strin
 		dkgResult.PartialPubKey[peerID] = ppkey
 	}
 	return dkgResult, nil
+}
+
+func ConvertChildInput(cfgPubkey config.Pubkey, cfgShare string, cfgBKs map[string]config.BK, cfgSeed []byte, cfgChainCode []byte) (*master.Result, error) {
+	// Build public key.
+	x, ok := new(big.Int).SetString(cfgPubkey.X, 10)
+	if !ok {
+		log.Error("Cannot convert string to big int", "x", cfgPubkey.X)
+		return nil, ErrConversion
+	}
+	y, ok := new(big.Int).SetString(cfgPubkey.Y, 10)
+	if !ok {
+		log.Error("Cannot convert string to big int", "y", cfgPubkey.Y)
+		return nil, ErrConversion
+	}
+	pubkey, err := ecpointgrouplaw.NewECPoint(GetCurve(), x, y)
+	if err != nil {
+		log.Error("Cannot get public key", "err", err)
+		return nil, err
+	}
+
+	// Build share.
+	share, ok := new(big.Int).SetString(cfgShare, 10)
+	if !ok {
+		log.Error("Cannot convert string to big int", "share", share)
+		return nil, ErrConversion
+	}
+
+	masterResult := &master.Result{
+		PublicKey: pubkey,
+		Share:     share,
+		Bks:       make(map[string]*birkhoffinterpolation.BkParameter),
+		Seed:          cfgSeed,
+		ChainCode:     cfgChainCode,
+	}
+
+	// Build bks.
+	for peerID, bk := range cfgBKs {
+		x, ok := new(big.Int).SetString(bk.X, 10)
+		if !ok {
+			log.Error("Cannot convert string to big int", "x", bk.X)
+			return nil, ErrConversion
+		}
+		masterResult.Bks[peerID] = birkhoffinterpolation.NewBkParameter(x, bk.Rank)
+	}
+
+	return masterResult, nil
 }
 
 // ConvertSignInput converts SingInput(=DKG&Refresh result) from config.

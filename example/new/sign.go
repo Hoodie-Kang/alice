@@ -63,28 +63,35 @@ func ReadSignConfigFile(filaPath string) (*SignConfig, error) {
 
 const signProtocol = "/sign/1.0.0"
 
-func Sign(path string, serverPort int64, clientPort int64) {
+func Sign(path string, port int64, peer int64) {
 	config, err := ReadSignConfigFile(path)
 	if err != nil {
 		logger.Error("Failed to read key file", map[string]string{"err": err.Error(), "path": path})
 	}
 
 	// Make a host that listens on the given multiaddress.
-	host, err := node.MakeBasicHost(serverPort)
+	host, err := node.MakeBasicHost(port)
 	if err != nil {
 		logger.Error("Failed to create a basic host", map[string]string{"err": err.Error()})
 	}
 
 	// Create a new peer manager.
-	pm := node.NewPeerManager("User", host, signProtocol)
-	pm.AddPeers([]int64{clientPort})
+	var role string
+	if port % 2 == 1 {
+		role = "Alice"
+	} else {
+		role = "Bob"
+	}
+	pm := node.NewPeerManager(role, host, signProtocol)
+	pm.AddPeers([]int64{peer})
 
 	signInput, err := utils.ConvertSignInput(config.Share, config.Pubkey, config.PartialPubKey, config.PaillierKey, config.Ped, config.BKs)
 	if err != nil {
 		logger.Error("Cannot get SignInput", map[string]string{"err": err.Error()})
 	}
 	l := node.NewListener()
-	service, err := signer.NewSign(2, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, []byte("1234"), "jwt", pm, l)
+	msg := []byte("1234")
+	service, err := signer.NewSign(2, config.SSid, signInput.Share, signInput.PublicKey, signInput.PartialPubKey, signInput.PaillierKey, signInput.PedParameter, signInput.Bks, msg, "jwt", pm, l)
 	if err != nil {
 		logger.Error("Cannot create a new sign", map[string]string{"err": err.Error()})
 	}
@@ -117,8 +124,8 @@ func Sign(path string, serverPort int64, clientPort int64) {
 	fmt.Println(result.R.String() + "#" + result.S.String() + "#" + strconv.FormatUint(uint64(result.V), 10))
 }
 
-func main() {
-	serverPort, _ := strconv.ParseInt(os.Args[2], 10, 64)
-	clientPort, _ := strconv.ParseInt(os.Args[3], 10, 64)
-	Sign(os.Args[1], serverPort, clientPort)
-}
+// func main() {
+// 	serverPort, _ := strconv.ParseInt(os.Args[2], 10, 64)
+// 	clientPort, _ := strconv.ParseInt(os.Args[3], 10, 64)
+// 	Sign(os.Args[1], serverPort, clientPort)
+// }
